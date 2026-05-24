@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next'
+import { SITE_URL } from '@/lib/site'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://yyodi-store.com'
+  const baseUrl = SITE_URL
   const currentDate = new Date().toISOString().split('T')[0]
 
   // Pages statiques principales
@@ -62,14 +63,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
-  // Catégories de produits
+  // Catégories de produits (chemins réels imbriqués category/subcategory)
   const categories = [
-    'tisane-detox',
+    'tisane/detox',
     'savon',
-    'tisane-digestive',
-    'baume-barbe',
-    'cheveux',
-    'huile-a-barbe'
+    'tisane/digestive',
+    'baume/baume-barbe',
+    'huile/cheveux',
+    'huile/huile-barbe'
   ]
 
   const categoryPages = categories.map((category) => ({

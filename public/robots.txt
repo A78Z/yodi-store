@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://yyodi-store.com/sitemap.xml
+Sitemap: https://yodi-k.com/sitemap.xml
 
 # Pages à ne pas indexer (authentification et profil)
 Disallow: /connexion
@@ -13,12 +13,12 @@ Disallow: /api/
 
 # Pages importantes à indexer
 Allow: /
-Allow: /tisane-detox
+Allow: /tisane/detox
 Allow: /savon
-Allow: /tisane-digestive
-Allow: /baume-barbe
-Allow: /cheveux
-Allow: /huile-a-barbe
+Allow: /tisane/digestive
+Allow: /baume/baume-barbe
+Allow: /huile/cheveux
+Allow: /huile/huile-barbe
 Allow: /panier
 Allow: /checkout
 Allow: /condition-dutilisations

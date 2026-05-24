@@ -1,4 +1,5 @@
 import React from "react";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 const ConditionDutilisations = () => {
   return (
@@ -10,7 +11,7 @@ const ConditionDutilisations = () => {
             Conditions Générales de Vente
           </h1>
           <p className="text-lg font-josefin text-gray-600">
-            Site internet www.yodi-store.com
+            Site internet www.yodi-k.com
           </p>
           <div className="w-24 h-1 bg-[#A36F5E] mx-auto mt-4"></div>
         </div>
@@ -42,7 +43,7 @@ const ConditionDutilisations = () => {
                 « CGV ») régissent les règles de vente et d&apos;achat des produits
                 mis en vente sur internet par le site internet «{" "}
                 <span className="text-[#A36F5E] font-semibold">
-                  https://www.yodi-store.com
+                  https://www.yodi-k.com
                 </span>{" "}
                 » (ci-après dénommé « yodi-store»). Les CGV ne concernent à
                 titre exclusif que les personnes physiques non commerçantes.
@@ -159,10 +160,10 @@ const ConditionDutilisations = () => {
           <p className="text-sm text-gray-500 font-josefin mt-2">
             Pour toute question concernant ces conditions, contactez-nous à
             <a
-              href="mailto:yodistores@gmail.com"
+              href={`mailto:${CONTACT_EMAIL}`}
               className="text-[#A36F5E] hover:underline ml-1"
             >
-              yodistores@gmail.com
+              {CONTACT_EMAIL}
             </a>
           </p>
         </div>
