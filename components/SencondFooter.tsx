@@ -6,72 +6,85 @@ import {
   FaFacebook,
   FaInstagram,
   FaWhatsapp,
-  FaShippingFast,
-  FaCreditCard,
   FaTiktok,
   FaSnapchat,
 } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
+import { Truck, Leaf, CreditCard, Sparkles } from "lucide-react";
 import Image from "next/image";
+import { CONTACT_EMAIL, PHONE_SN, PHONE_CA, PHONE_COMMERCIAL, WHATSAPP } from "@/lib/site";
 
 const SencondFooter = () => {
   return (
     <footer className="w-full bg-gray-100 mt-44">
-      {/* Section supérieure - Services */}
-      <div className="w-full bg-gray-50 py-8 px-4 lg:px-20">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+      {/* Section supérieure - Pourquoi choisir Yodi-K ? */}
+      <div className="w-full bg-gradient-to-b from-[#FAF7F4] to-white py-12 md:py-16 px-4 lg:px-20">
+        <h2 className="flex items-center justify-center gap-2 font-playfair text-2xl md:text-3xl font-bold text-center text-[#A36F5E] mb-10">
+          <Sparkles className="w-6 h-6" aria-hidden="true" />
+          Pourquoi choisir Yodi-K&nbsp;?
+        </h2>
+
+        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Livraison */}
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-[#A36F5E] rounded-full flex items-center justify-center">
-              <FaShippingFast className="w-6 h-6 text-white" />
+          <div className="flex flex-col items-center text-center h-full bg-white rounded-2xl p-8 border border-black/5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(163,111,94,0.12)]">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-gradient-to-br from-[#FFE5D9] to-[#F5C896]">
+              <Truck className="w-8 h-8 text-[#A36F5E]" strokeWidth={1.8} aria-hidden="true" />
             </div>
-            <div>
-              <h3 className="text-lg font-josefin font-semibold text-[#A36F5E]">
-                Livraison
-              </h3>
-              <p className="text-sm text-gray-600 font-josefin">
-                En moins de 24h sur Dakar
-              </p>
-            </div>
+            <h3 className="font-playfair text-xl font-bold text-gray-900 mb-2">
+              Livraison Express
+            </h3>
+            <p className="font-josefin text-sm text-gray-500 leading-relaxed">
+              Recevez vos produits en moins de 24h partout à Dakar, du lundi au
+              samedi.
+            </p>
           </div>
 
-          {/* Authenticité */}
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-[#A36F5E] rounded-full flex items-center justify-center">
-              <svg
-                className="w-6 h-6 text-white"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
+          {/* 100% Naturel */}
+          <div className="flex flex-col items-center text-center h-full bg-white rounded-2xl p-8 border border-black/5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(163,111,94,0.12)]">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-gradient-to-br from-[#E8F5E9] to-[#C8E6C9]">
+              <Leaf className="w-8 h-8 text-[#2D7A4A]" strokeWidth={1.8} aria-hidden="true" />
             </div>
-            <div>
-              <h3 className="text-lg font-josefin font-semibold text-[#A36F5E]">
-                Authenticité Garantie
-              </h3>
-              <p className="text-sm text-gray-600 font-josefin">
-                Produits de bonne qualité
-              </p>
-            </div>
+            <h3 className="font-playfair text-xl font-bold text-gray-900 mb-2">
+              100% Naturel
+            </h3>
+            <p className="font-josefin text-sm text-gray-500 leading-relaxed">
+              Produits authentiques, sans additifs ni conservateurs. Sélectionnés
+              avec soin pour votre bien-être.
+            </p>
           </div>
 
-          {/* Paiement */}
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-[#A36F5E] rounded-full flex items-center justify-center">
-              <FaCreditCard className="w-6 h-6 text-white" />
+          {/* Paiement flexible */}
+          <div className="flex flex-col items-center text-center h-full bg-white rounded-2xl p-8 border border-black/5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(163,111,94,0.12)]">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-gradient-to-br from-[#E3F2FD] to-[#BBDEFB]">
+              <CreditCard className="w-8 h-8 text-[#1976D2]" strokeWidth={1.8} aria-hidden="true" />
             </div>
-            <div>
-              <h3 className="text-lg font-josefin font-semibold text-[#A36F5E]">
-                Paiement au choix
-              </h3>
-              <p className="text-sm text-gray-600 font-josefin">
-                Espèces - Orange Money - Wave - Carte bancaire
-              </p>
+            <h3 className="font-playfair text-xl font-bold text-gray-900 mb-2">
+              Paiement flexible
+            </h3>
+            <p className="font-josefin text-sm text-gray-500 leading-relaxed mb-4">
+              Choisissez votre mode de paiement préféré. 100% sécurisé.
+            </p>
+            <div className="mt-auto flex items-center justify-center gap-3">
+              <Image
+                src="/wave.png"
+                alt="Wave"
+                width={56}
+                height={56}
+                className="h-7 w-auto object-contain"
+              />
+              <Image
+                src="/orange-money.png"
+                alt="Orange Money"
+                width={56}
+                height={56}
+                className="h-7 w-auto object-contain"
+              />
+              <span className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-600 font-josefin">
+                CB
+              </span>
+              <span className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-600 font-josefin">
+                Espèces
+              </span>
             </div>
           </div>
         </div>
@@ -80,50 +93,71 @@ const SencondFooter = () => {
       {/* Section inférieure - Navigation et contact */}
       <div className="w-full bg-gray-100 py-12 px-4 lg:px-20">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+          {/* TODO (newsletter, étape future — nécessite un backend de stockage des emails) :
+              <div className="footer-newsletter">🌿 Restons en contact — formulaire d'inscription</div>
+              Voir SPEC à créer (modèle "abonnés" + route /api/newsletter). Désactivé pour l'instant. */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Logo et Contact */}
             <div className="">
               <div className="flex items-center gap-3 mb-4">
                 <div>
                   <Image
-                    src="/logo.png"
-                    alt="Yodi-store"
-                    width={100}
-                    height={100}
+                    src="/logo-yodi-k.png"
+                    alt="Yodi-K"
+                    width={140}
+                    height={116}
+                    className="h-auto w-[120px] object-contain"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600 font-josefin">
-                  yodistores@gmail.com
-                </p>
+              <p className="text-sm text-gray-600 font-josefin leading-relaxed mb-4 max-w-xs">
+                Cosmétiques naturels &amp; parapharmacie en ligne, préparés avec
+                soin pour votre beauté et votre bien-être. Présents au Sénégal
+                🇸🇳 et au Canada 🇨🇦.
+              </p>
+              <div className="space-y-3 font-josefin text-sm">
+                {/* Sénégal */}
+                <div>
+                  <p className="font-semibold text-[#A36F5E] mb-1">🇸🇳 Sénégal</p>
+                  <a
+                    href={`tel:${PHONE_COMMERCIAL.tel}`}
+                    className="block text-gray-600 hover:text-[#A36F5E]"
+                  >
+                    📞 Téléphone : {PHONE_COMMERCIAL.label}
+                  </a>
+                  <a
+                    href={`https://wa.me/${WHATSAPP}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-gray-600 hover:text-[#A36F5E]"
+                  >
+                    💬 WhatsApp : {PHONE_SN.label}
+                  </a>
+                </div>
+                {/* Canada */}
+                <div>
+                  <p className="font-semibold text-[#A36F5E] mb-1">🇨🇦 Canada</p>
+                  <a
+                    href={`tel:${PHONE_CA.tel}`}
+                    className="block text-gray-600 hover:text-[#A36F5E]"
+                  >
+                    📞 Téléphone : {PHONE_CA.label}
+                  </a>
+                </div>
+                {/* Email */}
                 <a
-                  href="tel:+221789689698"
-                  className="text-sm text-gray-600 font-josefin"
+                  href={`mailto:${CONTACT_EMAIL}`}
+                  className="block text-gray-600 hover:text-[#A36F5E]"
                 >
-                  S/N +221 78 968 96 98
+                  📧 {CONTACT_EMAIL}
                 </a>
-
-                <br />
-                <a
-                  href="tel:+18192908365"
-                  className="text-sm text-gray-600 font-josefin"
-                >
-                  C/N +1 81 9 2 908365
-                </a>
-                <br />
-                <a
-                  href="tel:+18192908365"
-                  className="text-sm text-gray-600 font-josefin"
-                >
-                  Num. commercial : +221 78 012 84 86
-                </a>
+                {/* TODO: passer à contact@yodi-k.com une fois la boîte créée (cf. lib/site.ts) */}
               </div>
             </div>
 
             {/* Catégories */}
             <div>
-              <h3 className="text-lg font-josefin font-semibold text-[#A36F5E] mb-4">
+              <h3 className="text-sm font-josefin font-bold uppercase tracking-wider text-[#A36F5E] mb-4">
                 Catégories
               </h3>
               <ul className="space-y-2">
@@ -153,6 +187,22 @@ const SencondFooter = () => {
                 </li>
                 <li>
                   <Link
+                    href="/baume/baume-barbe"
+                    className="text-sm text-gray-600 hover:text-[#A36F5E] font-josefin"
+                  >
+                    Baume à Barbe
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/huile/cheveux"
+                    className="text-sm text-gray-600 hover:text-[#A36F5E] font-josefin"
+                  >
+                    Cheveux
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/savon"
                     className="text-sm text-gray-600 hover:text-[#A36F5E] font-josefin"
                   >
@@ -162,105 +212,154 @@ const SencondFooter = () => {
               </ul>
             </div>
 
-            {/* Informations pratiques */}
+            {/* Aide & infos */}
             <div>
-              <h3 className="text-lg font-josefin font-semibold text-[#A36F5E] mb-4">
-                Informations pratiques
+              <h3 className="text-sm font-josefin font-bold uppercase tracking-wider text-[#A36F5E] mb-4">
+                Aide &amp; infos
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-2.5">
                 <li>
                   <Link
                     href="/profile"
-                    className="text-sm text-gray-600 hover:text-[#A36F5E] font-josefin"
+                    className="text-sm text-gray-600 hover:text-[#A36F5E] hover:translate-x-1 inline-block transition-all font-josefin"
                   >
                     Mon compte
                   </Link>
                 </li>
-
                 <li>
                   <Link
                     href="/condition-dutilisations"
-                    className="text-sm text-gray-600 font-semibold hover:text-[#A36F5E] font-josefin"
+                    className="text-sm text-gray-600 hover:text-[#A36F5E] hover:translate-x-1 inline-block transition-all font-josefin"
                   >
-                    Conditions d&apos;utilisation
+                    Conditions générales (CGV)
                   </Link>
                 </li>
+                <li>
+                  <a
+                    href={`https://wa.me/${WHATSAPP}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-gray-600 hover:text-[#A36F5E] hover:translate-x-1 inline-block transition-all font-josefin"
+                  >
+                    Nous contacter (WhatsApp)
+                  </a>
+                </li>
+                {/* TODO: activer ces liens quand les pages existeront (cf. TODO-PAGES.md) :
+                    À propos, Livraison & délais, Moyens de paiement, Politique de retour,
+                    FAQ, Mentions légales, Politique de confidentialité, Cookies. */}
               </ul>
             </div>
 
             {/* Suivez-nous */}
             <div>
-              <h3 className="text-lg font-josefin font-semibold text-[#A36F5E] mb-4">
+              <h3 className="text-sm font-josefin font-bold uppercase tracking-wider text-[#A36F5E] mb-4">
                 Suivez-nous
               </h3>
-              <div className="flex gap-3">
+              <p className="text-sm text-gray-600 font-josefin leading-relaxed mb-4">
+                Rejoignez notre communauté pour nos nouveautés et offres
+                exclusives.
+              </p>
+              <div className="flex gap-3 flex-wrap">
                 <a
                   href="https://www.facebook.com/yyodistores"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-8 h-8 bg-[#A36F5E] rounded-full flex items-center justify-center hover:bg-[#916253] transition-colors"
+                  aria-label="Yodi-K sur Facebook"
+                  title="Facebook"
+                  className="w-9 h-9 bg-white border border-[#A36F5E]/15 rounded-full flex items-center justify-center text-[#A36F5E] hover:bg-[#A36F5E] hover:text-white transition-all hover:-translate-y-0.5"
                 >
-                  <FaFacebook className="w-5 h-5 text-blue-600" />
+                  <FaFacebook className="w-[18px] h-[18px]" />
                 </a>
                 <a
                   href="https://www.instagram.com/yodi_store"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-8 h-8 bg-[#A36F5E] rounded-full flex items-center justify-center hover:bg-[#916253] transition-colors"
+                  aria-label="Yodi-K sur Instagram"
+                  title="Instagram"
+                  className="w-9 h-9 bg-white border border-[#A36F5E]/15 rounded-full flex items-center justify-center text-[#A36F5E] hover:bg-[#A36F5E] hover:text-white transition-all hover:-translate-y-0.5"
                 >
-                  <FaInstagram className="w-5 h-5 text-pink-500" />
+                  <FaInstagram className="w-[18px] h-[18px]" />
                 </a>
                 <a
-                  href="https://wa.me/221789689698"
+                  href={`https://wa.me/${WHATSAPP}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-8 h-8 bg-[#A36F5E] rounded-full flex items-center justify-center hover:bg-[#916253] transition-colors"
+                  aria-label="Contactez Yodi-K sur WhatsApp"
+                  title="WhatsApp"
+                  className="w-9 h-9 bg-white border border-[#A36F5E]/15 rounded-full flex items-center justify-center text-[#A36F5E] hover:bg-[#A36F5E] hover:text-white transition-all hover:-translate-y-0.5"
                 >
-                  <FaWhatsapp className="w-5 h-5 text-green-600" />
+                  <FaWhatsapp className="w-[18px] h-[18px]" />
                 </a>
                 <a
                   href="https://tiktok.com/@yyodi2"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-8 h-8 bg-[#A36F5E] rounded-full flex items-center justify-center hover:bg-[#916253] transition-colors"
+                  aria-label="Yodi-K sur TikTok"
+                  title="TikTok"
+                  className="w-9 h-9 bg-white border border-[#A36F5E]/15 rounded-full flex items-center justify-center text-[#A36F5E] hover:bg-[#A36F5E] hover:text-white transition-all hover:-translate-y-0.5"
                 >
-                  <FaTiktok className="w-5 h-5 text-black" />
+                  <FaTiktok className="w-[18px] h-[18px]" />
                 </a>
                 <a
                   href="https://www.snapchat.com/add/yyodi-store"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-8 h-8 bg-[#A36F5E] rounded-full flex items-center justify-center hover:bg-[#916253] transition-colors"
+                  aria-label="Yodi-K sur Snapchat"
+                  title="Snapchat"
+                  className="w-9 h-9 bg-white border border-[#A36F5E]/15 rounded-full flex items-center justify-center text-[#A36F5E] hover:bg-[#A36F5E] hover:text-white transition-all hover:-translate-y-0.5"
                 >
-                  <FaSnapchat className="w-5 h-5 text-yellow-400" />
+                  <FaSnapchat className="w-[18px] h-[18px]" />
                 </a>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-josefin font-semibold text-[#A36F5E] mb-4">
-                Paiement sécurisé
-              </h3>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-lg flex items-center justify-center">
-                  <Image
-                    src="/wave.png"
-                    alt="Wave"
-                    width={156}
-                    height={156}
-                    className="w-14 h-14 object-contain"
-                  />
-                </div>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                  <Image
-                    src="/orange-money.png"
-                    alt="Orange Money"
-                    width={132}
-                    height={132}
-                    className="w-12 h-12 object-contain"
-                  />
-                </div>
-              </div>
+          </div>
+
+          {/* Bandeau paiement sécurisé (pleine largeur) */}
+          <div className="mt-10 pt-8 border-t border-black/10 text-center">
+            <p className="text-sm font-josefin font-semibold text-gray-600 mb-3">
+              Paiement 100% sécurisé
+            </p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Image
+                src="/wave.png"
+                alt="Paiement Wave"
+                width={120}
+                height={48}
+                className="h-8 w-auto object-contain bg-white rounded-md px-2 py-1"
+              />
+              <Image
+                src="/orange-money.png"
+                alt="Paiement Orange Money"
+                width={120}
+                height={48}
+                className="h-8 w-auto object-contain bg-white rounded-md px-2 py-1"
+              />
+              <span className="inline-flex items-center rounded-md bg-white border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-600 font-josefin">
+                Visa
+              </span>
+              <span className="inline-flex items-center rounded-md bg-white border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-600 font-josefin">
+                Mastercard
+              </span>
+              <span className="inline-flex items-center rounded-md bg-white border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-600 font-josefin">
+                Espèces à la livraison
+              </span>
+            </div>
+          </div>
+
+          {/* Barre légale */}
+          <div className="mt-8 pt-6 border-t border-black/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-center">
+            <p className="text-xs text-gray-500 font-josefin">
+              © {new Date().getFullYear()} Yodi-K — Tous droits réservés.
+            </p>
+            <div className="flex items-center gap-4 flex-wrap justify-center">
+              <Link
+                href="/condition-dutilisations"
+                className="text-xs text-gray-500 hover:text-[#A36F5E] font-josefin"
+              >
+                CGV
+              </Link>
+              {/* TODO: ajouter Mentions légales, Confidentialité, Cookies quand les pages existeront (cf. TODO-PAGES.md) */}
             </div>
           </div>
         </div>
