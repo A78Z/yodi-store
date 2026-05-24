@@ -47,11 +47,11 @@ export default function ProfileLayout({
         <div>
           <Link href="/" className="flex items-center gap-0">
             <Image
-              src="/logo.png"
-              alt="senthales logo"
+              src="/logo-yodi-k.png"
+              alt="Yodi-K"
               height={100}
-              width={100}
-              className="px-4 py-2 object-cover"
+              width={120}
+              className="px-4 py-2 h-auto w-[110px] object-contain"
             />
             <span className=" max-sm:hidden text-5xl font-extrabold text-gray-300 -ml-4">
               Yodi
