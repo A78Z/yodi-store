@@ -7,40 +7,60 @@ import { IProduct } from "@/lib/models/product";
 import useStore from "@/lib/store-manage";
 import { toast } from "sonner";
 import { trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, ShoppingCart, Check, ArrowRight } from "lucide-react";
+import NotifyButton from "@/components/NotifyButton";
+import { formatProductName } from "@/lib/format";
 
-// ============================================
-// 🚀 SSR OPTIMIZATION: Props interface for server-fetched data
-// ============================================
 interface ProductCarouselProps {
     initialProducts: IProduct[];
 }
 
+const FAVORITES_KEY = "yodi-favorites";
+
 const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
-    // Products come from server - no client fetch needed
     const [products] = useState<IProduct[]>(initialProducts);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
+    const [favorites, setFavorites] = useState<Set<string>>(new Set());
+    const [addedId, setAddedId] = useState<string | null>(null);
     const carouselRef = useRef<HTMLDivElement>(null);
-    const sectionRef = useRef<HTMLElement>(null);
+    const addedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const { addToCart, selectedCurrency, usdRate } = useStore();
 
-    // Nombre de cartes visibles selon la taille d'écran
     const [visibleCards, setVisibleCards] = useState(4);
 
-    // Responsive: detect screen size (optimisé avec debounce implicite)
+    // Favoris : chargés depuis localStorage (persistance simple, v1)
+    useEffect(() => {
+        try {
+            const saved = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
+            if (Array.isArray(saved)) setFavorites(new Set(saved));
+        } catch {
+            /* ignore */
+        }
+    }, []);
+
+    const toggleFavorite = useCallback((id: string) => {
+        setFavorites((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            try {
+                localStorage.setItem(FAVORITES_KEY, JSON.stringify([...next]));
+            } catch {
+                /* ignore */
+            }
+            return next;
+        });
+    }, []);
+
+    // Responsive
     useEffect(() => {
         const handleResize = () => {
             const width = window.innerWidth;
-            if (width < 640) {
-                setVisibleCards(1);
-            } else if (width < 1024) {
-                setVisibleCards(2);
-            } else {
-                setVisibleCards(4);
-            }
+            if (width < 640) setVisibleCards(1);
+            else if (width < 1024) setVisibleCards(2);
+            else setVisibleCards(4);
         };
-
         handleResize();
         window.addEventListener("resize", handleResize, { passive: true });
         return () => window.removeEventListener("resize", handleResize);
@@ -49,16 +69,18 @@ const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
     // Auto-play (pause on hover)
     useEffect(() => {
         if (isPaused || products.length === 0) return;
-
         const interval = setInterval(() => {
             setCurrentIndex((prev) => {
                 const maxIndex = Math.max(0, products.length - visibleCards);
                 return prev >= maxIndex ? 0 : prev + 1;
             });
         }, 4000);
-
         return () => clearInterval(interval);
     }, [isPaused, products.length, visibleCards]);
+
+    useEffect(() => () => {
+        if (addedTimeout.current) clearTimeout(addedTimeout.current);
+    }, []);
 
     const goToPrev = useCallback(() => {
         setCurrentIndex((prev) => (prev <= 0 ? Math.max(0, products.length - visibleCards) : prev - 1));
@@ -75,7 +97,6 @@ const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
         const newProduct = { ...product, quantity: 1, id: product._id as string };
         addToCart(newProduct);
 
-        // Meta Pixel tracking
         const finalPrice = product.discount
             ? product.price - (product.price * product.discount) / 100
             : product.price;
@@ -86,7 +107,6 @@ const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
             quantity: 1,
             currency: selectedCurrency,
         });
-
         sendToCAPI("AddToCart", {
             content_ids: [product._id as string],
             content_name: product.title,
@@ -96,6 +116,11 @@ const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
             num_items: 1,
         }, eventId);
 
+        // Confirmation visuelle "✓ Ajouté" sur le bouton
+        setAddedId(product._id as string);
+        if (addedTimeout.current) clearTimeout(addedTimeout.current);
+        addedTimeout.current = setTimeout(() => setAddedId(null), 1600);
+
         toast.success("Produit ajouté au panier", {
             duration: 3000,
             style: { color: "#10b981" },
@@ -103,16 +128,11 @@ const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
         });
     }, [addToCart, selectedCurrency]);
 
-    // ============================================
-    // 🚀 OPTIMIZATION 3: Calcul mémorisé des indices visibles
-    // ============================================
     const visibleProductIndices = useMemo(() => {
         const indices = new Set<number>();
-        // Produits actuellement visibles
         for (let i = currentIndex; i < currentIndex + visibleCards && i < products.length; i++) {
             indices.add(i);
         }
-        // Précharger le prochain slide (1 produit de plus)
         if (currentIndex + visibleCards < products.length) {
             indices.add(currentIndex + visibleCards);
         }
@@ -121,45 +141,46 @@ const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
 
     const maxIndex = Math.max(0, products.length - visibleCards);
 
-    // SSR: No skeleton needed - products are pre-fetched from server
     if (products.length === 0) return null;
 
     return (
-        <section
-            ref={sectionRef}
-            className="w-full max-w-7xl mx-auto px-4 py-12 relative"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-            aria-label="Carrousel de nos produits les plus appréciés"
-        >
-            {/* Titre - rendu immédiat pour LCP */}
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold font-josefin text-center text-[#A36F5E] mb-8">
-                Nos huiles & soins les plus appréciés
-            </h2>
+        <section className="w-full bg-[#FAF7F4] py-12 md:py-16" aria-label="Nos produits les plus appréciés">
+            {/* En-tête */}
+            <div className="max-w-2xl mx-auto text-center px-4 mb-8 md:mb-12">
+                <h2 className="font-playfair text-2xl md:text-4xl font-bold text-[#A36F5E] leading-tight">
+                    Nos huiles &amp; soins les plus appréciés
+                </h2>
+                <p className="font-josefin text-sm md:text-base text-gray-500 mt-3">
+                    Plébiscités par notre communauté Yodi-K
+                </p>
+            </div>
 
-            {/* Carousel Container */}
-            <div className="relative">
-                {/* Navigation Arrows */}
+            {/* Carrousel */}
+            <div
+                className="max-w-7xl mx-auto px-4 relative"
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+            >
+                {/* Flèches */}
                 <button
                     onClick={goToPrev}
                     disabled={currentIndex === 0}
-                    className="absolute -left-2 md:-left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed p-2 md:p-3 rounded-full shadow-lg transition-all duration-300"
+                    className="absolute -left-2 md:-left-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-[#A36F5E] hover:text-white text-[#A36F5E] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[#A36F5E] p-2 md:p-3 rounded-full shadow-lg transition-all duration-300 hidden sm:flex"
                     aria-label="Produits précédents"
                 >
-                    <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-[#A36F5E]" />
+                    <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
-
                 <button
                     onClick={goToNext}
                     disabled={currentIndex >= maxIndex}
-                    className="absolute -right-2 md:-right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed p-2 md:p-3 rounded-full shadow-lg transition-all duration-300"
+                    className="absolute -right-2 md:-right-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-[#A36F5E] hover:text-white text-[#A36F5E] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[#A36F5E] p-2 md:p-3 rounded-full shadow-lg transition-all duration-300 hidden sm:flex"
                     aria-label="Produits suivants"
                 >
-                    <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-[#A36F5E]" />
+                    <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
 
-                {/* Carousel Track - GPU accelerated */}
-                <div className="overflow-hidden px-2">
+                {/* Track */}
+                <div className="overflow-hidden px-1">
                     <div
                         ref={carouselRef}
                         className="flex will-change-transform"
@@ -172,87 +193,117 @@ const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
                             const productUrl = product.subCategory
                                 ? `/${product.category}/${product.subCategory}`
                                 : `/${product.category}/product/${product._id}`;
-
                             const finalPrice = product.discount && product.discount > 0
                                 ? product.price - (product.price * product.discount) / 100
                                 : product.price;
-
-                            // 🚀 OPTIMIZATION 5: Priority loading pour les premiers slides
+                            const indisponible = product.disponible === false;
+                            const discount = product.discount ?? 0;
+                            const id = String(product._id);
+                            const isFav = favorites.has(id);
+                            const isAdded = addedId === id;
                             const isPriorityImage = index < visibleCards;
                             const isInViewport = visibleProductIndices.has(index);
 
                             return (
                                 <article
-                                    key={String(product._id)}
+                                    key={id}
                                     className="flex-shrink-0 px-2 md:px-3 group"
                                     style={{ width: `${100 / visibleCards}%` }}
                                 >
-                                    <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden h-full flex flex-col">
-                                        {/* Zone cliquable: Image + Infos */}
+                                    <div className="relative bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_28px_rgba(163,111,94,0.15)] transition-all duration-300 hover:-translate-y-1 overflow-hidden h-full flex flex-col">
                                         <Link
                                             href={productUrl}
-                                            className="flex-1 flex flex-col"
-                                            prefetch={isPriorityImage} // Prefetch uniquement les premiers
+                                            className="flex-1 flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A36F5E] rounded-t-2xl"
+                                            prefetch={isPriorityImage}
                                         >
-                                            {/* Image - Optimisée */}
-                                            <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
+                                            <div className="relative w-full aspect-square overflow-hidden bg-[#F5F1ED]">
                                                 <Image
                                                     src={product.imageUrl}
-                                                    alt={product.title}
+                                                    alt={formatProductName(product.title)}
                                                     fill
                                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                                    // 🚀 OPTIMIZATION 6: Priority pour LCP, lazy pour le reste
+                                                    className={`object-cover transition-transform duration-500 group-hover:scale-105 ${indisponible ? "grayscale opacity-90" : ""}`}
                                                     priority={isPriorityImage}
                                                     loading={isPriorityImage ? undefined : "lazy"}
-                                                    // Placeholder blur pour meilleur CLS
                                                     placeholder="blur"
                                                     blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
-                                                    // Désactiver le décodage pour les images non visibles
                                                     decoding={isInViewport ? "async" : "async"}
                                                 />
-                                                {product.discount && product.discount > 0 && (
-                                                    <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
-                                                        -{product.discount}%
+
+                                                {/* Badge promo (pastille) ou Bientôt disponible */}
+                                                {indisponible ? (
+                                                    <span className="absolute top-3 left-3 bg-[#FF9800] text-white text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                                                        BIENTÔT DISPONIBLE
+                                                    </span>
+                                                ) : discount > 0 && (
+                                                    <span className={`absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm ${discount >= 15 ? "bg-red-600" : "bg-[#A36F5E]"}`}>
+                                                        -{discount}%
                                                     </span>
                                                 )}
                                             </div>
 
-                                            {/* Product Info */}
                                             <div className="p-4 flex-1 flex flex-col">
-                                                <h3 className="font-josefin font-medium text-sm text-gray-800 line-clamp-2 mb-2 group-hover:text-[#A36F5E] transition-colors">
-                                                    {product.title}
+                                                <h3 className="font-josefin font-semibold text-sm text-gray-800 line-clamp-2 mb-2 min-h-[2.6em] group-hover:text-[#A36F5E] transition-colors">
+                                                    {formatProductName(product.title)}
                                                 </h3>
-
-                                                {/* Prix */}
-                                                <div className="flex items-center gap-2 mt-auto">
-                                                    {product.discount && product.discount > 0 && (
+                                                <div className="flex items-baseline gap-2 mt-auto">
+                                                    {discount > 0 && (
                                                         <span className="text-gray-400 line-through text-sm font-josefin">
                                                             {selectedCurrency === "XOF"
                                                                 ? product.price
-                                                                : Number(product.price / Number(usdRate || 1)).toFixed(2)
-                                                            } {selectedCurrency === "XOF" ? "FCFA" : "USD"}
+                                                                : Number(product.price / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
                                                         </span>
                                                     )}
                                                     <span className="text-[#A36F5E] font-bold text-lg font-josefin">
                                                         {selectedCurrency === "XOF"
                                                             ? Math.round(finalPrice)
-                                                            : Number(finalPrice / Number(usdRate || 1)).toFixed(2)
-                                                        } {selectedCurrency === "XOF" ? "FCFA" : "USD"}
+                                                            : Number(finalPrice / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
                                                     </span>
                                                 </div>
                                             </div>
                                         </Link>
 
-                                        {/* Bouton Ajouter au panier */}
+                                        {/* Bouton favori (hors du Link) */}
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                toggleFavorite(id);
+                                            }}
+                                            aria-label={isFav ? `Retirer ${formatProductName(product.title)} des favoris` : `Ajouter ${formatProductName(product.title)} aux favoris`}
+                                            aria-pressed={isFav}
+                                            className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm shadow-sm flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
+                                        >
+                                            <Heart className={`w-[18px] h-[18px] transition-colors ${isFav ? "text-red-600 fill-red-600" : "text-gray-400"}`} />
+                                        </button>
+
+                                        {/* Panier (dispo) ou "Me prévenir" (bientôt) */}
                                         <div className="px-4 pb-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleAddToCart(product)}
-                                                className="w-full bg-[#A36F5E] hover:bg-[#916253] text-white font-josefin font-medium py-2.5 px-4 rounded-lg transition-colors duration-300 text-sm"
-                                            >
-                                                Ajouter au panier
-                                            </button>
+                                            {indisponible ? (
+                                                <NotifyButton
+                                                    productId={id}
+                                                    productName={product.title}
+                                                    productImage={product.imageUrl}
+                                                    variant="card"
+                                                />
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleAddToCart(product)}
+                                                    className={`w-full inline-flex items-center justify-center gap-2 text-white font-josefin font-semibold py-2.5 px-4 rounded-xl transition-all duration-300 text-sm active:scale-[0.98] ${isAdded ? "bg-emerald-600" : "bg-[#A36F5E] hover:bg-[#916253]"}`}
+                                                >
+                                                    {isAdded ? (
+                                                        <>
+                                                            <Check className="w-4 h-4" /> Ajouté
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ShoppingCart className="w-4 h-4" /> Ajouter au panier
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </article>
@@ -262,23 +313,31 @@ const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
                 </div>
             </div>
 
-            {/* Dots Indicator - optimisé */}
+            {/* Dots */}
             {maxIndex > 0 && (
-                <nav className="flex justify-center gap-2 mt-6" aria-label="Navigation du carrousel">
+                <nav className="flex justify-center gap-2 mt-8" aria-label="Navigation du carrousel">
                     {Array.from({ length: maxIndex + 1 }).map((_, index) => (
                         <button
                             key={index}
                             onClick={() => setCurrentIndex(index)}
-                            className={`h-2.5 rounded-full transition-all duration-300 ${index === currentIndex
-                                ? "bg-[#A36F5E] w-6"
-                                : "bg-gray-300 hover:bg-gray-400 w-2.5"
-                                }`}
+                            className={`h-2.5 rounded-full transition-all duration-300 ${index === currentIndex ? "bg-[#A36F5E] w-8" : "bg-gray-300 hover:bg-gray-400 w-2.5"}`}
                             aria-label={`Aller à la page ${index + 1}`}
                             aria-current={index === currentIndex ? "true" : undefined}
                         />
                     ))}
                 </nav>
             )}
+
+            {/* CTA global */}
+            <div className="flex justify-center mt-10">
+                <Link
+                    href="/huile"
+                    className="group inline-flex items-center gap-2 rounded-full border-2 border-[#A36F5E] text-[#A36F5E] hover:bg-[#A36F5E] hover:text-white font-josefin font-semibold px-8 py-3.5 transition-all duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A36F5E] focus-visible:ring-offset-2"
+                >
+                    Voir tous les produits
+                    <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+                </Link>
+            </div>
         </section>
     );
 };

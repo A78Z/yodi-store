@@ -110,7 +110,7 @@ export const categories: Category[] = [
       },
 
       {
-        title: "Savon au agrumes",
+        title: "Savon aux agrumes",
         slug: "savon-au-agrumes",
         id: "aocwgjs",
       },
@@ -120,7 +120,7 @@ export const categories: Category[] = [
         id: "slpsakce",
       },
       {
-        title: "savon exfoliant au citron et au graines de pavot",
+        title: "Savon exfoliant au citron et aux graines de pavot",
         slug: "savon-exfoliant-au-citron-et-au-graines-de-pavot",
         id: "asckppao",
       },
@@ -143,7 +143,7 @@ export const categories: Category[] = [
   },
   {
     id: "b51k0j",
-    title: "Bebe & Maman",
+    title: "Bébé & Maman",
     slug: "bebe-maman",
   }
 ];
@@ -334,26 +334,27 @@ export const products = [
 export const currentSelection = [
   {
     id: "hsy51",
-    title: "Tisane detox",
-    description: "Tisane detox prepare avec soin pour enlever des toxines",
-    category: "tisane-detox",
+    title: "Tisane détox",
+    description: "Tisane détox préparée avec soin pour éliminer les toxines",
+    category: "tisane/detox",
     productImage: "/current/tisane-detox.webp",
     isActive: true,
   },
   {
     id: "atw92",
     title: "Tisane digestive",
-    description: "Produit de tisane digestive pour enlever des toxines",
-    category: "tisane-digestive",
+    description:
+      "Tisane digestive préparée avec soin pour faciliter la digestion",
+    category: "tisane/digestive",
     productImage: "/current/tisane-digestive.webp",
     isActive: false,
   },
   {
     id: "xqy73",
-    title: "Jus de tisane detox",
+    title: "Jus de tisane détox",
     description:
-      "Jus de tisane detox prepare avec soin pour enlever des toxines",
-    category: "tisane-detox",
+      "Jus de tisane détox préparé avec soin pour éliminer les toxines",
+    category: "tisane/detox",
     productImage: "/current/tisane.webp",
     isActive: false,
   },

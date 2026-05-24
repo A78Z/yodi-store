@@ -2,6 +2,7 @@ import Categories from "@/components/Categories";
 import CurrentSelection from "@/components/CurrentSelection";
 import LifestyleSection from "@/components/LifestyleSection";
 import ProductCarousel from "@/components/ProductCarousel";
+import Testimonials from "@/components/Testimonials";
 import SencondFooter from "@/components/SencondFooter";
 import Slider from "@/components/Slider";
 import { connectDB } from "@/lib/db";
@@ -42,6 +43,7 @@ export default async function Home() {
       <Categories />
       <CurrentSelection />
       <ProductCarousel initialProducts={carouselProducts} />
+      <Testimonials />
       <LifestyleSection />
       <SencondFooter />
       {/* Bandeau supérieur vert */}

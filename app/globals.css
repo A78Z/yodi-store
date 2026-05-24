@@ -180,3 +180,33 @@ body {
 .animation-delay-600 {
   animation-delay: 0.6s;
 }
+
+/* Animation de la cloche "Me prévenir" (survol) */
+@keyframes bell-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-10deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-6deg); }
+  80% { transform: rotate(6deg); }
+}
+
+.animate-bell-wiggle {
+  animation: bell-wiggle 0.5s ease-in-out;
+}
+
+/* Effet Ken Burns subtil sur le slide actif du hero */
+@keyframes ken-burns {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.08) translate(-1.5%, -1%); }
+}
+.animate-ken-burns {
+  animation: ken-burns 7s ease-out forwards;
+}
+
+/* Respect de la préférence système : on coupe les animations du hero */
+@media (prefers-reduced-motion: reduce) {
+  .animate-ken-burns,
+  .animate-bell-wiggle {
+    animation: none !important;
+  }
+}
