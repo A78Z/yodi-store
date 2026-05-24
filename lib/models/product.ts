@@ -16,6 +16,7 @@ export interface IProduct extends Document {
   description?: string;
   usage?: string;
   isFeatured?: boolean; // Pour le carrousel "produits mis en avant"
+  disponible?: boolean; // false = "Bientôt disponible" (liste d'attente email)
 }
 
 const productSchema = new Schema(
@@ -86,6 +87,10 @@ const productSchema = new Schema(
     isFeatured: {
       type: Boolean,
       default: false, // Par défaut, non mis en avant
+    },
+    disponible: {
+      type: Boolean,
+      default: true, // Par défaut disponible (produits existants déjà en vente)
     },
   },
   {
