@@ -114,6 +114,10 @@ const useStore = create<MyStore>()(
     {
       name: "cart-storage",
       storage: createJSONStorage(() => localStorage),
+      // Évite le mismatch d'hydratation SSR : le client démarre avec les
+      // valeurs par défaut (identiques au serveur), puis on réhydrate
+      // manuellement depuis localStorage APRÈS le montage (cf. ProviderSession).
+      skipHydration: true,
     }
   )
 );

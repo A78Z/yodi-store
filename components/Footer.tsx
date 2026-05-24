@@ -25,10 +25,14 @@ const Footer = () => {
         <Home className="w-5 h-5 text-black" />
         <span className="text-black">Accueil</span>
       </Link>
-      <div className="flex flex-col items-center gap-2">
+      <Link
+        href="/categories"
+        aria-label="Voir toutes nos catégories de produits"
+        className="flex flex-col items-center gap-2"
+      >
         <BoxIcon className="w-5 h-5 text-black" />
-        <span className="text-black">Marque</span>
-      </div>
+        <span className="text-black">Catégories</span>
+      </Link>
       <Link href="/panier" className="flex flex-col items-center gap-2">
         <ShoppingCart className="w-5 h-5 text-black" />
         <span className="text-black">Panier</span>

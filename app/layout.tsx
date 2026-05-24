@@ -12,6 +12,8 @@ import Hero from "@/components/Hero";
 import { Toaster } from "sonner";
 import { ProviderSession } from "@/components/ProviderSession";
 import MetaPixel from "@/components/MetaPixel";
+import ScrollToTopButton from "@/components/ScrollToTopButton";
+import { SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,18 +38,24 @@ const playfairDisplay = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "yodi-store Cosmetics",
+  metadataBase: new URL(SITE_URL),
+  title: "Yodi Cosmetics",
   description:
-    "Yodi-store vend des produits pharmaceutiques et cosmétiques, vous trouverez ici toute les sortes de produit cosmétiques",
+    "Yodi vend des produits parapharmaceutiques et cosmétiques. Vous trouverez ici toutes sortes de produits cosmétiques à Dakar, Sénégal.",
   icons: {
-    icon: "/logo.png",
+    icon: "/logo-yodi-k.png",
+    apple: "/logo-yodi-k.png",
+  },
+
+  alternates: {
+    canonical: "/",
   },
 
   keywords: [
-    "yodi-store",
-    "yodi-store Cosmetics",
-    "yodi-store pharmaceutiques",
-    "yodi-store cosmétiques",
+    "yodi",
+    "Yodi Cosmetics",
+    "yodi parapharmaceutiques",
+    "yodi cosmétiques",
     "dakar",
     "sénégal",
     "Tisane Detox",
@@ -59,17 +67,22 @@ export const metadata: Metadata = {
   ],
 
   openGraph: {
-    title: "yodi-store Cosmetics",
+    title: "Yodi Cosmetics",
     description:
-      "Yodi-store vend des produits parapharmaceutiques et cosmétiques, vous trouverez ici toute les sortes de produit cosmétiques",
-    images: "/logo.png",
+      "Yodi vend des produits parapharmaceutiques et cosmétiques. Vous trouverez ici toutes sortes de produits cosmétiques à Dakar, Sénégal.",
+    url: SITE_URL,
+    siteName: "Yodi Cosmetics",
+    images: "/logo-yodi-k.png",
+    locale: "fr_FR",
+    type: "website",
   },
 
   twitter: {
-    title: "yodi-store Cosmetics",
+    card: "summary_large_image",
+    title: "Yodi Cosmetics",
     description:
-      "Yodi-store vend des produits parapharmaceutiques et cosmétiques, vous trouverez ici toute les sortes de produit cosmétiques",
-    images: "/logo.png",
+      "Yodi vend des produits parapharmaceutiques et cosmétiques. Vous trouverez ici toutes sortes de produits cosmétiques à Dakar, Sénégal.",
+    images: "/logo-yodi-k.png",
   },
 };
 
@@ -88,10 +101,15 @@ export default function RootLayout({
       >
         <ProviderSession>
           <Toaster />
-          <Header />
-          <Hero />
+          {/* Header complet en UN seul bloc, NON sticky : il défile avec la page
+              (espace visuel récupéré). z-40 conservé pour la hiérarchie des dropdowns. */}
+          <div className="relative z-40 bg-white">
+            <Header />
+            <Hero />
+          </div>
           {children}
           <Footer />
+          <ScrollToTopButton />
         </ProviderSession>
       </body>
     </html>
