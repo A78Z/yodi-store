@@ -9,6 +9,7 @@ import { IProduct } from "@/lib/models/product";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { trackViewContent, trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
+import NotifyButton from "@/components/NotifyButton";
 
 const ProductDetailPage = () => {
   const { addToCart, selectedCurrency, usdRate } = useStore();
@@ -21,6 +22,9 @@ const ProductDetailPage = () => {
   const imageRef = useRef<HTMLDivElement>(null);
   const [product, setProduct] = useState<IProduct | null>(null);
   const [loading, setLoading] = useState(true);
+  const [waitingCount, setWaitingCount] = useState(0);
+
+  const indisponible = product?.disponible === false;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -37,6 +41,16 @@ const ProductDetailPage = () => {
     };
     fetchProduct();
   }, [productname]);
+
+  // Preuve sociale : nombre de personnes en attente (si produit indisponible)
+  useEffect(() => {
+    if (product && product.disponible === false) {
+      fetch(`/api/notifications/subscribe?produitId=${product._id}`)
+        .then((r) => r.json())
+        .then((d) => setWaitingCount(d.count || 0))
+        .catch(() => {});
+    }
+  }, [product]);
 
   // Meta Pixel: Track ViewContent when product loads
   useEffect(() => {
@@ -325,20 +339,26 @@ const ProductDetailPage = () => {
                 {product.title}
               </h1>
 
+              {indisponible && (
+                <span className="inline-block mt-2 bg-[#FF9800] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                  BIENTÔT DISPONIBLE
+                </span>
+              )}
+
               {/* Prix */}
               <div className="flex items-center gap-4">
-                <span className="text-[#A36F5E] line-through text-lg font-medium">
-                  {selectedCurrency === "XOF" ? product.price : Number(product.price / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                </span>
-                {product.discount && (
-                  <span className="text-[#A36F5E] text-2xl font-bold">
-                    {Math.round(
-                      selectedCurrency === "XOF" ? product.price - (product.price * product.discount) / 100
-                        : Number(product.price - (product.price * product.discount) / 100) / Number(usdRate || 1)
-                    ).toFixed(2)}{" "}
-                    {selectedCurrency === "XOF" ? "FCFA" : "USD"}
+                {(product.discount ?? 0) > 0 && (
+                  <span className="text-gray-400 line-through text-lg font-medium">
+                    {selectedCurrency === "XOF" ? product.price : Number(product.price / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
                   </span>
                 )}
+                <span className="text-[#A36F5E] text-2xl font-bold">
+                  {Math.round(
+                    selectedCurrency === "XOF" ? product.price - (product.price * (product.discount ?? 0)) / 100
+                      : Number(product.price - (product.price * (product.discount ?? 0)) / 100) / Number(usdRate || 1)
+                  ).toFixed(2)}{" "}
+                  {selectedCurrency === "XOF" ? "FCFA" : "USD"}
+                </span>
               </div>
 
               {/* Avantages/Bénéfices */}
@@ -352,41 +372,64 @@ const ProductDetailPage = () => {
                 </div>
               )}
 
-              {/* Stock */}
-              {product.stock > 0 && (
-                <div className="text-[#A36F5E] font-medium text-xs mt-4">
-                  En stock
+              {indisponible ? (
+                /* Produit pas encore disponible : capture d'email */
+                <div className="mt-4 space-y-3">
+                  <NotifyButton
+                    productId={String(product._id)}
+                    productName={product.title}
+                    productImage={product.imageUrl}
+                    variant="detail"
+                  />
+                  {waitingCount > 0 && (
+                    <p className="text-sm text-gray-600">
+                      <strong>{waitingCount}</strong>{" "}
+                      {waitingCount > 1
+                        ? "personnes attendent"
+                        : "personne attend"}{" "}
+                      ce produit.
+                    </p>
+                  )}
                 </div>
-              )}
+              ) : (
+                <>
+                  {/* Stock */}
+                  {product.stock > 0 && (
+                    <div className="text-[#A36F5E] font-medium text-xs mt-4">
+                      En stock
+                    </div>
+                  )}
 
-              {/* Sélecteur de quantité */}
-              <div className="flex md:flex-row flex-col items-start md:items-center gap-4">
-                <span className="text-gray-700 font-medium">Quantité:</span>
-                <div className="flex items-center border border-gray-300 rounded-md">
-                  <button
-                    onClick={decreaseQuantity}
-                    className="px-3 py-2 hover:opacity-80 transition-colors"
-                  >
-                    -
-                  </button>
-                  <span className="px-4 py-2 border-x border-gray-300 min-w-[60px] text-center">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={increaseQuantity}
-                    className="px-3 py-2 hover:opacity-80 transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
-                {/* Bouton Ajouter au panier */}
-                <button
-                  onClick={() => handleAddToCart(product)}
-                  className="bg-[#A36F5E] cursor-pointer text-center hover:bg-[#916253] text-white p-3 rounded-md font-semibold text-sm transition-colors"
-                >
-                  Ajouter au panier
-                </button>
-              </div>
+                  {/* Sélecteur de quantité */}
+                  <div className="flex md:flex-row flex-col items-start md:items-center gap-4">
+                    <span className="text-gray-700 font-medium">Quantité:</span>
+                    <div className="flex items-center border border-gray-300 rounded-md">
+                      <button
+                        onClick={decreaseQuantity}
+                        className="px-3 py-2 hover:opacity-80 transition-colors"
+                      >
+                        -
+                      </button>
+                      <span className="px-4 py-2 border-x border-gray-300 min-w-[60px] text-center">
+                        {quantity}
+                      </span>
+                      <button
+                        onClick={increaseQuantity}
+                        className="px-3 py-2 hover:opacity-80 transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                    {/* Bouton Ajouter au panier */}
+                    <button
+                      onClick={() => handleAddToCart(product)}
+                      className="bg-[#A36F5E] cursor-pointer text-center hover:bg-[#916253] text-white p-3 rounded-md font-semibold text-sm transition-colors"
+                    >
+                      Ajouter au panier
+                    </button>
+                  </div>
+                </>
+              )}
 
               {/* Informations de la marque */}
               <div className="text-gray-700 my-4">

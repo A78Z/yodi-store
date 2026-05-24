@@ -9,6 +9,7 @@ import useStore from "@/lib/store-manage";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
+import NotifyButton from "@/components/NotifyButton";
 
 interface PaginationInfo {
   currentPage: number;
@@ -202,21 +203,30 @@ const ProductSubcategory = ({
               </div>
             </div>
           ))
-          : products.map((product) => (
+          : products.map((product) => {
+            const indisponible = product.disponible === false;
+            return (
             <Link
               href={`/${category}/${subcategory}/${product._id}`}
               key={product._id as string}
-              className="flex flex-col h-full"
+              className="flex flex-col h-full group"
             >
               {/* Contenu principal avec flex-1 pour occuper l'espace disponible */}
               <div className="flex-1 flex flex-col items-center gap-3">
-                <Image
-                  src={product.imageUrl}
-                  alt={product.title}
-                  width={220}
-                  height={220}
-                  className="w-72 h-64 object-cover object-center"
-                />
+                <div className="relative overflow-hidden rounded-lg">
+                  <Image
+                    src={product.imageUrl}
+                    alt={product.title}
+                    width={220}
+                    height={220}
+                    className={`w-72 h-64 object-cover object-center ${indisponible ? "grayscale opacity-90" : ""}`}
+                  />
+                  {indisponible && (
+                    <span className="absolute top-2 left-2 bg-[#FF9800] text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm font-josefin">
+                      BIENTÔT DISPONIBLE
+                    </span>
+                  )}
+                </div>
                 <p className="text-black text-sm font-josefin text-center">
                   {product.title}
                 </p>
@@ -225,38 +235,43 @@ const ProductSubcategory = ({
                 </p>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[#A36F5E] line-through text-xl font-josefin font-medium">
-                    {selectedCurrency === "XOF" ? product.price : Number(product.price / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                  </span>
-                  <span className="text-[#262626] text-xl font-josefin font-medium">
-                    {product.discount && product.discount > 0 && (
-                      <span className="ml-2">
-                        {Math.round(
-                          selectedCurrency === "XOF" ? product.price -
-                            (product.price * product.discount) / 100
-                            : Number(product.price -
-                              (product.price * product.discount) / 100) / Number(usdRate || 1)
-                        ).toFixed(2)}{" "}
-                        {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                      </span>
-                    )}
+                  {(product.discount ?? 0) > 0 && (
+                    <span className="text-gray-400 line-through text-sm font-josefin">
+                      {selectedCurrency === "XOF" ? product.price : Number(product.price / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
+                    </span>
+                  )}
+                  <span className="text-[#A36F5E] text-xl font-josefin font-bold">
+                    {selectedCurrency === "XOF"
+                      ? Math.round(product.price - (product.price * (product.discount ?? 0)) / 100)
+                      : Number((product.price - (product.price * (product.discount ?? 0)) / 100) / Number(usdRate || 1)).toFixed(2)}{" "}
+                    {selectedCurrency === "XOF" ? "FCFA" : "USD"}
                   </span>
                 </div>
               </div>
 
               <div className="mt-auto pt-4">
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleAddToCart(product);
-                  }}
-                  className="bg-[#A36F5E] cursor-pointer text-white px-4 py-2 rounded-md text-sm font-josefin font-medium w-full transition-all duration-300 hover:bg-[#916253]"
-                >
-                  Ajouter au panier
-                </button>
+                {indisponible ? (
+                  <NotifyButton
+                    productId={String(product._id)}
+                    productName={product.title}
+                    productImage={product.imageUrl}
+                    variant="card"
+                  />
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleAddToCart(product);
+                    }}
+                    className="bg-[#A36F5E] cursor-pointer text-white px-4 py-2 rounded-md text-sm font-josefin font-medium w-full transition-all duration-300 hover:bg-[#916253]"
+                  >
+                    Ajouter au panier
+                  </button>
+                )}
               </div>
             </Link>
-          ))}
+            );
+          })}
       </div>
 
       {/* Élément de déclenchement pour la pagination infinie */}

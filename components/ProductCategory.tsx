@@ -9,6 +9,7 @@ import useStore from "@/lib/store-manage";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
+import NotifyButton from "@/components/NotifyButton";
 
 interface PaginationInfo {
   currentPage: number;
@@ -27,6 +28,9 @@ const ProductCategory = ({ category }: { category: string }) => {
     null
   );
   const [hasMoreProducts, setHasMoreProducts] = useState(true);
+  const [availabilityFilter, setAvailabilityFilter] = useState<
+    "all" | "available" | "soon"
+  >("all");
   const categoryData = categories.find((cat) => cat.slug === category);
   const { addToCart, selectedCurrency, usdRate } = useStore();
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -224,11 +228,49 @@ const ProductCategory = ({ category }: { category: string }) => {
     });
   };
 
+  // Disponibles d'abord, puis "Bientôt disponible" — avec filtre de disponibilité.
+  const displayedProducts = [...products]
+    .sort(
+      (a, b) =>
+        (a.disponible !== false ? 0 : 1) - (b.disponible !== false ? 0 : 1)
+    )
+    .filter((p) => {
+      if (availabilityFilter === "available") return p.disponible !== false;
+      if (availabilityFilter === "soon") return p.disponible === false;
+      return true;
+    });
+
+  const soonCount = products.filter((p) => p.disponible === false).length;
+
   return (
     <div className="w-full flex flex-col items-start py-10 mx-auto max-w-7xl font-josefin px-4">
       <h1 className="text-2xl lg:text-3xl font-bold text-black mb-4">
         {categoryData?.title}
       </h1>
+
+      {/* Filtre de disponibilité (affiché seulement s'il y a des produits "bientôt") */}
+      {soonCount > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Filtrer par disponibilité">
+          {([
+            { key: "all", label: "Tous" },
+            { key: "available", label: "Disponibles maintenant" },
+            { key: "soon", label: `Bientôt disponibles (${soonCount})` },
+          ] as const).map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setAvailabilityFilter(opt.key)}
+              aria-pressed={availabilityFilter === opt.key}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                availabilityFilter === opt.key
+                  ? "bg-[#A36F5E] text-white shadow-md"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
       {categoryData?.subcategories && (
         <div className="w-full my-6">
           <div className="flex flex-wrap gap-2 mb-4">
@@ -250,7 +292,7 @@ const ProductCategory = ({ category }: { category: string }) => {
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
               >
-                {subcategory.title} ({subcategory.slug})
+                {subcategory.title}
               </button>
             ))}
           </div>
@@ -294,11 +336,13 @@ const ProductCategory = ({ category }: { category: string }) => {
               </div>
             </div>
           ))
-          : products.map((product, index) => {
+          : displayedProducts.map((product, index) => {
             // Construire l'URL de manière sécurisée - JAMAIS de fallback vers la catégorie seule
             const productUrl = product.subCategory
               ? `/${category}/${product.subCategory}`
               : `/${category}/product/${product._id}`; // Fallback vers page produit par ID
+
+            const indisponible = product.disponible === false;
 
             return (
               <div
@@ -316,8 +360,13 @@ const ProductCategory = ({ category }: { category: string }) => {
                       alt={product.title}
                       width={220}
                       height={220}
-                      className="w-72 h-64 object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                      className={`w-72 h-64 object-cover object-center transition-transform duration-300 group-hover:scale-105 ${indisponible ? "grayscale opacity-90" : ""}`}
                     />
+                    {indisponible && (
+                      <span className="absolute top-2 left-2 bg-[#FF9800] text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm font-josefin">
+                        BIENTÔT DISPONIBLE
+                      </span>
+                    )}
                   </div>
                   <p className="text-black text-sm font-josefin text-center group-hover:text-[#A36F5E] transition-colors">
                     {product.title}
@@ -327,34 +376,38 @@ const ProductCategory = ({ category }: { category: string }) => {
                   </p>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-[#A36F5E] line-through text-xl font-josefin font-medium">
-                      {selectedCurrency === "XOF" ? product.price : Number(product.price / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                    </span>
-                    <span className="text-[#262626] text-xl font-josefin font-medium">
-                      {product.discount && product.discount > 0 && (
-                        <span className="ml-2">
-                          {Math.round(
-                            selectedCurrency === "XOF" ? product.price -
-                              (product.price * product.discount) / 100
-                              : Number(product.price -
-                                (product.price * product.discount) / 100) / Number(usdRate || 1)
-                          ).toFixed(2)}{" "}
-                          {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                        </span>
-                      )}
+                    {(product.discount ?? 0) > 0 && (
+                      <span className="text-gray-400 line-through text-sm font-josefin">
+                        {selectedCurrency === "XOF" ? product.price : Number(product.price / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
+                      </span>
+                    )}
+                    <span className="text-[#A36F5E] text-xl font-josefin font-bold">
+                      {selectedCurrency === "XOF"
+                        ? Math.round(product.price - (product.price * (product.discount ?? 0)) / 100)
+                        : Number((product.price - (product.price * (product.discount ?? 0)) / 100) / Number(usdRate || 1)).toFixed(2)}{" "}
+                      {selectedCurrency === "XOF" ? "FCFA" : "USD"}
                     </span>
                   </div>
                 </Link>
 
                 {/* Bouton séparé - PAS dans le Link */}
                 <div className="mt-auto pt-4">
-                  <button
-                    type="button"
-                    onClick={() => handleAddToCart(product)}
-                    className="bg-[#A36F5E] cursor-pointer text-white px-4 py-2 rounded-md text-sm font-josefin font-medium w-full transition-all duration-300 hover:bg-[#916253]"
-                  >
-                    Ajouter au panier
-                  </button>
+                  {indisponible ? (
+                    <NotifyButton
+                      productId={String(product._id)}
+                      productName={product.title}
+                      productImage={product.imageUrl}
+                      variant="card"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleAddToCart(product)}
+                      className="bg-[#A36F5E] cursor-pointer text-white px-4 py-2 rounded-md text-sm font-josefin font-medium w-full transition-all duration-300 hover:bg-[#916253]"
+                    >
+                      Ajouter au panier
+                    </button>
+                  )}
                 </div>
               </div>
             );

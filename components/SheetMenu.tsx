@@ -54,6 +54,9 @@ const SheetMenu = () => {
                   {category.subcategories && (
                     <button
                       onClick={(e) => toggleCategory(category.id, e)}
+                      aria-haspopup="true"
+                      aria-expanded={openCategoryId === category.id}
+                      aria-label={`Afficher les sous-catégories de ${category.title}`}
                       className="p-2 rounded-full transition-all duration-300 hover:bg-[#A36F5E]/10"
                     >
                       <ChevronRight

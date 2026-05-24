@@ -120,7 +120,7 @@ const CartPage = () => {
                         : Number(cart.price / Number(usdRate || 1)).toFixed(2)}{" "}
                       {selectedCurrency === "XOF" ? "FCFA" : "USD"}
                     </span>
-                    {cart.discount && cart.discount > 0 && (
+                    {(cart.discount ?? 0) > 0 && (
                       <span className="ml-2">
                         {selectedCurrency === "XOF"
                           ? Math.round(
@@ -241,7 +241,7 @@ const CartPage = () => {
                         )}{" "}
                     {selectedCurrency === "XOF" ? "FCFA" : "USD"}
                   </span>
-                  {cart.discount && cart.discount > 0 && (
+                  {(cart.discount ?? 0) > 0 && (
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-gray-500 line-through">
                         {selectedCurrency === "XOF"

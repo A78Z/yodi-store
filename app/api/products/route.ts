@@ -1,21 +1,40 @@
 import ProductModel from "@/lib/models/product";
 import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/db";
 
 interface FilterType {
   category?: string;
   $or?: Array<{ subCategory: string | RegExp }>;
   isFeatured?: boolean;
   stock?: { $gt: number };
+  title?: RegExp;
 }
 
 interface SortType {
   [key: string]: 1 | -1;
 }
 
+// Construit une regex insensible à la casse ET aux accents pour la recherche.
+// Ex: "detox" matche "Tisane détox" ; "détox" matche "detox".
+function accentInsensitiveRegex(q: string): RegExp {
+  const classes: Record<string, string> = {
+    a: "[aàâä]", e: "[eéèêë]", i: "[iîï]", o: "[oôö]", u: "[uùûü]", c: "[cç]",
+  };
+  const base = q
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // retire les accents de la requête
+    .toLowerCase()
+    .trim();
+  const escaped = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // échappe les métacaractères
+  const pattern = escaped.replace(/[aeiouc]/g, (ch) => classes[ch] || ch);
+  return new RegExp(pattern, "i");
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
   const subCategory = searchParams.get("subCategory");
+  const q = searchParams.get("q"); // recherche texte (titre)
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "8");
 
@@ -25,11 +44,20 @@ export async function GET(req: Request) {
   const sort = searchParams.get("sort") || "newest"; // newest, oldest, price-asc, price-desc
 
   try {
+    // S'assurer que la connexion MongoDB est établie (sinon les requêtes
+    // Mongoose bufferisent puis échouent sur une instance "froide").
+    await connectDB();
+
     // Construction du filtre dynamique
     const filter: FilterType = {};
 
     if (category) {
       filter.category = category;
+    }
+
+    // Recherche texte sur le titre (insensible casse + accents)
+    if (q && q.trim()) {
+      filter.title = accentInsensitiveRegex(q);
     }
 
     if (subCategory) {

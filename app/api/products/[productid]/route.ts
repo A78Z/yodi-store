@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import ProductModel from "@/lib/models/product";
+import { connectDB } from "@/lib/db";
 
 export async function GET(
   req: Request,
@@ -8,6 +9,7 @@ export async function GET(
   const { productid } = await params;
 
   try {
+    await connectDB();
     const product = await ProductModel.findById(productid);
     return NextResponse.json(product);
   } catch (error) {
