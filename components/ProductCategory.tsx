@@ -24,6 +24,8 @@ const ProductCategory = ({ category, initialData }: { category: string; initialD
   const [products, setProducts] = useState<IProduct[]>(initialData.products);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [pagination, setPagination] = useState<PaginationInfo | null>(initialData.pagination);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(
     null
@@ -44,6 +46,7 @@ const ProductCategory = ({ category, initialData }: { category: string; initialD
     if (firstLoad.current) { firstLoad.current = false; return; }
     const controller = new AbortController();
     setLoading(true);
+    setError(false);
     setProducts([]);
     setPagination(null);
     setHasMoreProducts(false);
@@ -56,10 +59,10 @@ const ProductCategory = ({ category, initialData }: { category: string; initialD
         setPagination(data.pagination);
         setHasMoreProducts(data.pagination?.hasNextPage || false);
       })
-      .catch(error => { if (error.name !== "AbortError") console.error(error); })
+      .catch(error => { if (error.name !== "AbortError") setError(true); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [category, selectedSubCategory]);
+  }, [category, selectedSubCategory, retry]);
 
   // Fonction pour charger plus de produits
   const loadMoreProducts = useCallback(async () => {
@@ -79,6 +82,7 @@ const ProductCategory = ({ category, initialData }: { category: string; initialD
         console.log("Loading more products with params:", params.toString());
 
         const response = await fetch(`/api/products?${params}`);
+        if (!response.ok) throw new Error("Products request failed");
         const data = await response.json();
 
         console.log("Load more API Response:", data);
@@ -86,8 +90,8 @@ const ProductCategory = ({ category, initialData }: { category: string; initialD
         setProducts((prev) => [...prev, ...(data.products || [])]);
         setPagination(data.pagination);
         setHasMoreProducts(data.pagination?.hasNextPage || false);
-      } catch (error) {
-        console.error("Error loading more products:", error);
+      } catch {
+        setError(true);
       } finally {
         setLoadingMore(false);
       }
@@ -302,7 +306,7 @@ const ProductCategory = ({ category, initialData }: { category: string; initialD
                 >
                   <div className="relative overflow-hidden rounded-lg">
                     <Image
-                      src={product.imageUrl}
+                      src={product.imageUrl || "/logo-yodi-k.png"}
                       quality={90}
                       alt={product.title}
                       width={220}
@@ -410,8 +414,15 @@ const ProductCategory = ({ category, initialData }: { category: string; initialD
         </div>
       )}
 
+      {error && (
+        <div role="alert" className="w-full text-center py-8 text-gray-500">
+          <p>Impossible de charger les produits pour le moment.</p>
+          <button onClick={() => setRetry(value => value + 1)} className="mt-4 rounded-full border border-[#A36F5E] px-6 py-2 text-[#A36F5E]">Réessayer</button>
+        </div>
+      )}
+
       {/* Message quand aucun produit n'est trouvé */}
-      {!loading && products.length === 0 && (
+      {!loading && !error && products.length === 0 && (
         <div className="w-full text-center py-8">
           <span className="text-sm text-gray-500">
             {selectedSubCategory
