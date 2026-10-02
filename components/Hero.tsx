@@ -91,10 +91,7 @@ const Hero = () => {
     const fetchCurrencyRate = async () => {
       try {
         const response = await fetch("/api/currency", {
-          cache: "force-cache",
-          next: {
-            revalidate: 60 * 60 * 1, // 1 heure
-          },
+          cache: "no-store",
         });
         const data = await response.json();
         // console.log("data", data);

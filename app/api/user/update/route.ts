@@ -5,12 +5,12 @@ import bcrypt from "bcrypt";
 import { connectDB } from "@/lib/db";
 import { options } from "../../auth/[...nextauth]/option";
 
-await connectDB();
 export async function PATCH(req: Request) {
   const session = await getServerSession(options);
   if (!session || !session.user?.email) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
+  await connectDB();
   const user = await UserModel.findOne({ email: session.user.email });
   if (!user) {
     return NextResponse.json(

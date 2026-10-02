@@ -1,0 +1,3 @@
+{ mobile: false, navigationMs: 1758 }
+{ mobile: true, navigationMs: 1736 }
+API, search, filters, pagination, original images, navigation, cart persistence and checkout structure: PASS. No orders submitted.

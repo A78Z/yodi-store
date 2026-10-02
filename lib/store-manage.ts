@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { CART } from "./types/types";
+import { compactCartImages } from "./cart-images";
 
 interface MyStore {
   carts: CART[];
@@ -56,6 +57,7 @@ const useStore = create<MyStore>()(
                 quantity: crt.quantity + cart.quantity,
                 price: cart.price,
                 discount: cart.discount || 0,
+                imageUrl: cart.imageUrl,
               };
             }
             return crt;
@@ -113,6 +115,11 @@ const useStore = create<MyStore>()(
     }),
     {
       name: "cart-storage",
+      version: 1,
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<MyStore>;
+        return { ...state, carts: compactCartImages(Array.isArray(state.carts) ? state.carts : []) };
+      },
       storage: createJSONStorage(() => localStorage),
       // Évite le mismatch d'hydratation SSR : le client démarre avec les
       // valeurs par défaut (identiques au serveur), puis on réhydrate

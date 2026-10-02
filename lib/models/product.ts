@@ -8,6 +8,8 @@ export interface IProduct extends Document {
   subCategory?: string;
   discount?: number;
   imageUrl: string;
+  imageWidth?: number;
+  imageHeight?: number;
   benefits?: string[];
   stock: number;
   brand?: string;

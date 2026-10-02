@@ -1,0 +1,75 @@
+
+> yodi-store@0.1.0 build
+> next build --turbopack
+
+   ▲ Next.js 15.5.9 (Turbopack)
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Finished writing to disk in 62ms
+ ✓ Compiled successfully in 4.3s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/30) ...
+   Generating static pages (7/30) 
+   Generating static pages (14/30) 
+   Generating static pages (22/30) 
+ ✓ Generating static pages (30/30)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                     Size  First Load JS
+┌ ƒ /                                        14.5 kB         189 kB
+├ ○ /_not-found                                  0 B         174 kB
+├ ƒ /[category]                               4.8 kB         179 kB
+├ ƒ /[category]/[subcategory]                4.06 kB         178 kB
+├ ƒ /[category]/[subcategory]/[productname]  4.93 kB         179 kB
+├ ƒ /api/auth/[...nextauth]                      0 B            0 B
+├ ƒ /api/checkout                                0 B            0 B
+├ ƒ /api/currency                                0 B            0 B
+├ ƒ /api/forgot-password                         0 B            0 B
+├ ƒ /api/meta-capi                               0 B            0 B
+├ ƒ /api/notifications/subscribe                 0 B            0 B
+├ ƒ /api/notifications/unsubscribe               0 B            0 B
+├ ƒ /api/order/get-orders                        0 B            0 B
+├ ƒ /api/order/getstats                          0 B            0 B
+├ ƒ /api/order/last                              0 B            0 B
+├ ƒ /api/product-images/[productid]              0 B            0 B
+├ ƒ /api/products                                0 B            0 B
+├ ƒ /api/products/[productid]                    0 B            0 B
+├ ƒ /api/register                                0 B            0 B
+├ ƒ /api/resend-code                             0 B            0 B
+├ ƒ /api/reset-password                          0 B            0 B
+├ ƒ /api/user                                    0 B            0 B
+├ ƒ /api/user/delete-account                     0 B            0 B
+├ ƒ /api/user/update                             0 B            0 B
+├ ƒ /api/verify                                  0 B            0 B
+├ ○ /categories                                  0 B         174 kB
+├ ○ /checkout                                 4.2 kB         178 kB
+├ ○ /condition-dutilisations                     0 B         174 kB
+├ ○ /connexion                               2.35 kB         177 kB
+├ ○ /inscription                             4.53 kB         179 kB
+├ ○ /manifest.webmanifest                        0 B            0 B
+├ ○ /mot-de-passe-oublie                     3.01 kB         177 kB
+├ ○ /panier                                  2.18 kB         176 kB
+├ ○ /profile                                 5.56 kB         181 kB
+├ ○ /profile/commandes                       4.48 kB         180 kB
+├ ○ /recherche                               3.67 kB         178 kB
+└ ○ /sitemap.xml                                 0 B            0 B
++ First Load JS shared by all                 192 kB
+  ├ chunks/0e4889d356df2fcb.js               58.9 kB
+  ├ chunks/66603e994c881295.js               17.8 kB
+  ├ chunks/674649e7dad9f6b4.js               13.1 kB
+  ├ chunks/8082ab48faca5ea1.js               17.2 kB
+  ├ chunks/aad94a30f09546fd.js               11.1 kB
+  └ chunks/bb6bfdd414ca679e.js                 13 kB
+  ├ chunks/72b6d02b59f951cd.css              16.7 kB
+  └ other shared chunks (total)              44.6 kB
+
+
+ƒ Middleware                                   60 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

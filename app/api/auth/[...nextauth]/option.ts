@@ -4,7 +4,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import { connectDB } from "@/lib/db";
 
-connectDB();
 
 export const options: NextAuthOptions = {
   pages: {
@@ -28,6 +27,7 @@ export const options: NextAuthOptions = {
         credentials: Record<"email" | "password", string> | undefined
       ) {
         if (credentials) {
+          await connectDB();
           const isUserExist = await UserModel.findOne({
             email: credentials.email,
           });

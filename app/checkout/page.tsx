@@ -589,14 +589,14 @@ const CheckoutPage = () => {
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-600">Sous-total</span>
                   <span className="font-semibold text-gray-800">
-                    {selectedCurrency === "XOF" ? Math.round(subTotal).toLocaleString() : Number(subTotal / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
+                    {selectedCurrency === "XOF" ? Math.round(subTotal).toLocaleString("fr-FR") : Number(subTotal / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-600">Expédition</span>
                   <span className="font-semibold text-gray-800">
-                    Frais de livraison: {selectedCurrency === "XOF" ? shippingCost.toLocaleString() : Number(shippingCost / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
+                    Frais de livraison: {selectedCurrency === "XOF" ? shippingCost.toLocaleString("fr-FR") : Number(shippingCost / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
                   </span>
                 </div>
 

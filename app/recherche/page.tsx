@@ -137,6 +137,7 @@ const SearchResults = () => {
                   <div className="relative overflow-hidden rounded-lg">
                     <Image
                       src={product.imageUrl}
+                      quality={90}
                       alt={product.title}
                       width={220}
                       height={220}

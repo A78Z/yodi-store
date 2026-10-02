@@ -1,0 +1,8 @@
+
+/Users/projetmobiliernational/Desktop/yodistore/app/checkout/page.tsx
+   20:48  warning  'trackAddPaymentInfo' is defined but never used                                                                                                 @typescript-eslint/no-unused-vars
+   69:6   warning  React Hook useEffect has missing dependencies: 'carts', 'selectedCurrency', and 'subTotal'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  166:14  warning  'error' is defined but never used                                                                                                               @typescript-eslint/no-unused-vars
+
+✖ 3 problems (0 errors, 3 warnings)
+

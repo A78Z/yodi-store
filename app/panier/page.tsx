@@ -105,6 +105,7 @@ const CartPage = () => {
                       </button>
                       <Image
                         src={cart.imageUrl}
+                        quality={90}
                         alt={cart.title}
                         width={40}
                         height={40}
@@ -199,6 +200,7 @@ const CartPage = () => {
                 <div className="flex items-center gap-3 flex-1">
                   <Image
                     src={cart.imageUrl}
+                    quality={90}
                     alt={cart.title}
                     width={50}
                     height={50}

@@ -4,7 +4,6 @@ import { options } from "../../auth/[...nextauth]/option";
 import UserModel from "@/lib/models/user";
 import { connectDB } from "@/lib/db";
 
-await connectDB();
 
 export async function DELETE() {
   const session = await getServerSession(options);
@@ -13,6 +12,7 @@ export async function DELETE() {
   }
 
   try {
+    await connectDB();
     await UserModel.findByIdAndDelete(session.user.id);
     return NextResponse.json(
       { message: "Compte supprimé avec succès" },

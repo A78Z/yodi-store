@@ -1,22 +1,13 @@
 import { NextResponse } from "next/server";
-import ProductModel from "@/lib/models/product";
-import { connectDB } from "@/lib/db";
+import { getProduct } from "@/lib/product-data";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { productid: string } }
-) {
-  const { productid } = await params;
-
+export async function GET(req: Request, { params }: { params: Promise<{ productid: string }> }) {
   try {
-    await connectDB();
-    const product = await ProductModel.findById(productid);
-    return NextResponse.json(product);
+    const { productid } = await params;
+    const product = await getProduct(productid);
+    return NextResponse.json(product, { status: product ? 200 : 404, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    console.log(error);
-    return NextResponse.json(
-      { message: "Erreur lors de la récupération du produit" },
-      { status: 500 }
-    );
+    console.error("Error fetching product", error);
+    return NextResponse.json({ message: "Erreur lors de la récupération du produit" }, { status: 500 });
   }
 }

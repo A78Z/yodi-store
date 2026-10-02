@@ -22,55 +22,24 @@ interface PaginationInfo {
 const ProductSubcategory = ({
   category,
   subcategory,
+  initialData,
 }: {
   category: string;
   subcategory: string;
+  initialData: { products: IProduct[]; pagination: PaginationInfo };
 }) => {
-  const [products, setProducts] = useState<IProduct[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState<IProduct[]>(initialData.products);
+  const loading = false;
   const [loadingMore, setLoadingMore] = useState(false);
-  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(initialData.pagination);
   // Pas besoin de selectedSubCategory car on affiche toujours la même sous-catégorie
-  const [hasMoreProducts, setHasMoreProducts] = useState(true);
+  const [hasMoreProducts, setHasMoreProducts] = useState(initialData.pagination.hasNextPage);
   const categoryData = categories.find((cat) => cat.slug === category);
-  const { addToCart, selectedCurrency, usdRate } = useStore();
+  const addToCart = useStore(state => state.addToCart);
+  const selectedCurrency = useStore(state => state.selectedCurrency);
+  const usdRate = useStore(state => state.usdRate);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-
-  // Effet pour charger les produits initiaux quand la catégorie ou sous-catégorie change
-  useEffect(() => {
-    setProducts([]);
-    setHasMoreProducts(true);
-
-    const loadInitialProducts = async () => {
-      try {
-        setLoading(true);
-        const params = new URLSearchParams({
-          category,
-          subCategory: subcategory, // Utiliser subCategory au lieu de subcategory
-          page: "1",
-          limit: "8",
-        });
-
-        console.log("Loading initial products with params:", params.toString());
-
-        const response = await fetch(`/api/products?${params}`);
-        const data = await response.json();
-
-        console.log("Initial API Response:", data);
-
-        setProducts(data.products || []);
-        setPagination(data.pagination);
-        setHasMoreProducts(data.pagination?.hasNextPage || false);
-      } catch (error) {
-        console.error("Error loading initial products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadInitialProducts();
-  }, [category, subcategory]);
 
   // Fonction pour charger plus de produits
   const loadMoreProducts = useCallback(async () => {
@@ -216,9 +185,11 @@ const ProductSubcategory = ({
                 <div className="relative overflow-hidden rounded-lg">
                   <Image
                     src={product.imageUrl}
+                    quality={90}
                     alt={product.title}
                     width={220}
                     height={220}
+                      sizes="288px"
                     className={`w-72 h-64 object-cover object-center ${indisponible ? "grayscale opacity-90" : ""}`}
                   />
                   {indisponible && (

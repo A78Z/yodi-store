@@ -20,11 +20,16 @@ export const connectDB = async (): Promise<string> => {
 
   if (!cached.promise) {
     cached.promise = mongoose
-      .connect(process.env.MONGO_URI_IBYTRADE_GOAPI!)
+      .connect(process.env.MONGO_URI_IBYTRADE_GOAPI!, { serverSelectionTimeoutMS: 10000 })
       .then((mongoose) => {
         return mongoose;
       });
   }
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (error) {
+    cached.promise = null;
+    throw error;
+  }
   return "Connected to database with success";
 };

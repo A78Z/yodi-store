@@ -1,0 +1,2171 @@
+{
+  "method": {
+    "date": "2026-10-02",
+    "timezone": "Africa/Dakar",
+    "baseline_commit": "dd55bbfb5e0969f74fa00ead4d028f7bcb7fddc7",
+    "deployed": false,
+    "catalog": "fixed snapshot of 6 public products; isolated read-only fixture database",
+    "compiler": "Next.js 15.5.9 webpack for both local comparison builds; actual project validated with npm run build (Turbopack)",
+    "desktop": {
+      "viewport": [
+        1440,
+        900
+      ],
+      "dpr": 1,
+      "network": "unthrottled"
+    },
+    "mobile": {
+      "viewport": [
+        390,
+        844
+      ],
+      "dpr": 3,
+      "latencyMs": 150,
+      "downloadBytesPerSecond": 200000,
+      "uploadBytesPerSecond": 93750,
+      "cpuSlowdown": 4
+    },
+    "cache": "browser HTTP cache cleared for cold; retained for warm; server image cache not purged",
+    "sampleCount": "one observation per page/profile/cache combination",
+    "productsReadyDefinition": "elapsed time from page.goto until load event and first add-to-cart button present; conservative full-load readiness, not earliest product paint",
+    "limitations": [
+      "Real MongoDB latency is excluded from local timings; direct local MongoDB connection failed.",
+      "Production before measurements experienced network variability and timeout on mobile product detail. No production after measurement: optimizations are not deployed.",
+      "No field INP collected.",
+      "Global lint: 4 pre-existing errors and 30 warnings; global TypeScript: 20 remaining diagnostics. New backend/store helpers have no type diagnostics.",
+      "No actual order submitted; authenticated creation was not exercised."
+    ],
+    "modified_files": [
+      "app/[category]/[subcategory]/[productname]/loading.tsx",
+      "app/[category]/[subcategory]/[productname]/page.tsx",
+      "app/[category]/[subcategory]/page.tsx",
+      "app/[category]/loading.tsx",
+      "app/[category]/page.tsx",
+      "app/api/auth/[...nextauth]/option.ts",
+      "app/api/checkout/route.ts",
+      "app/api/currency/route.ts",
+      "app/api/forgot-password/route.ts",
+      "app/api/order/get-orders/route.ts",
+      "app/api/order/getstats/route.ts",
+      "app/api/order/last/route.ts",
+      "app/api/product-images/[productid]/route.ts",
+      "app/api/products/[productid]/route.ts",
+      "app/api/products/route.ts",
+      "app/api/register/route.ts",
+      "app/api/user/delete-account/route.ts",
+      "app/api/user/route.ts",
+      "app/api/user/update/route.ts",
+      "app/checkout/page.tsx",
+      "app/page.tsx",
+      "app/panier/page.tsx",
+      "app/recherche/page.tsx",
+      "components/Hero.tsx",
+      "components/ProductCarousel.tsx",
+      "components/ProductCategory.tsx",
+      "components/ProductDetail.tsx",
+      "components/ProductDetailSkeleton.tsx",
+      "components/ProductSubcategory.tsx",
+      "lib/cart-images.ts",
+      "lib/checkout-products.ts",
+      "lib/db.ts",
+      "lib/models/product.ts",
+      "lib/product-data.ts",
+      "lib/product-query.ts",
+      "lib/store-manage.ts",
+      "scripts/cart-images.test.mjs",
+      "scripts/checkout-products.test.mjs",
+      "scripts/db.test.mjs"
+    ]
+  },
+  "local_before": [
+    {
+      "path": "/",
+      "mobile": false,
+      "warm": false,
+      "productsReady": 532,
+      "documentBytes": 13775467,
+      "lcp": 304,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 121.19999999925494,
+      "load": 526.8999999985099,
+      "images": 323652,
+      "js": 304316,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 629.3999999985099,
+          "duration": 2.900000000372529,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 630.3999999985099,
+          "duration": 5.100000001490116,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 642.5999999996275,
+          "duration": 12,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 6080,
+          "duration": 10.5
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1920&q=75",
+          "bytes": 53548,
+          "duration": 12
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1920&q=75",
+          "bytes": 44998,
+          "duration": 15.599999999627471
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1920&q=75",
+          "bytes": 82726,
+          "duration": 13.400000000372529
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=640&q=75",
+          "bytes": 9806,
+          "duration": 14.400000000372529
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=640&q=75",
+          "bytes": 11356,
+          "duration": 14.5
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1920&q=75",
+          "bytes": 48132,
+          "duration": 17
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=640&q=75",
+          "bytes": 11204,
+          "duration": 18.700000001117587
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fcheveux.webp&w=640&q=75",
+          "bytes": 23102,
+          "duration": 19.300000000745058
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=640&q=75",
+          "bytes": 16928,
+          "duration": 19.40000000037253
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=640&q=75",
+          "bytes": 15772,
+          "duration": 22.200000001117587
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "mobile": false,
+      "warm": true,
+      "productsReady": 482,
+      "documentBytes": 13775467,
+      "lcp": 228,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 94.20000000111759,
+      "load": 479.6000000014901,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 496.5,
+          "duration": 0.5,
+          "bytes": 0
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 497.30000000074506,
+          "duration": 5.199999999254942,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 570.7000000011176,
+          "duration": 5.599999999627471,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1920&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1920&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1920&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1920&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fcheveux.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": false,
+      "warm": false,
+      "productsReady": 283,
+      "documentBytes": 34634,
+      "lcp": 52,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 24,
+      "load": 49.79999999888241,
+      "images": 6080,
+      "js": 309360,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 55.09999999962747,
+          "duration": 2.599999999627471,
+          "bytes": 325
+        },
+        {
+          "url": "/api/products?category=huile&page=1&limit=8",
+          "start": 55.69999999925494,
+          "duration": 31.90000000037253,
+          "bytes": 2568830
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 56.19999999925494,
+          "duration": 22.699999999254942,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 79.19999999925494,
+          "duration": 22,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 6080,
+          "duration": 4.099999999627471
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": false,
+      "warm": true,
+      "productsReady": 251,
+      "documentBytes": 34634,
+      "lcp": 36,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 7.799999998882413,
+      "load": 27.5,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 32.20000000111759,
+          "duration": 0.5,
+          "bytes": 0
+        },
+        {
+          "url": "/api/products?category=huile&page=1&limit=8",
+          "start": 32.80000000074506,
+          "duration": 18.59999999962747,
+          "bytes": 0
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 33.30000000074506,
+          "duration": 3.299999998882413,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 51.09999999962747,
+          "duration": 6.100000001490116,
+          "bytes": 407
+        },
+        {
+          "url": "/api/products?category=huile&page=1&limit=8",
+          "start": 65.5,
+          "duration": 709.8000000007451,
+          "bytes": 300
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile/huile-cheveux/6939bdf396e4c874c38c2e65",
+      "mobile": false,
+      "warm": false,
+      "productsReady": 189,
+      "documentBytes": 39059,
+      "lcp": 164,
+      "cls": 0.007843889317558299,
+      "lcpElement": "<img alt=\"HUILE LOCKS\" width=\"500\" height=\"600\" decoding=\"async\" data-nimg=\"1\" class=\"w-full h-auto object-contain transition-opacity duration-300\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAp0AAAPECAIAAABjQRfiAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemt",
+      "ttfb": 9.199999999254942,
+      "load": 37.30000000074506,
+      "images": 6080,
+      "js": 311350,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 40.600000001490116,
+          "duration": 3,
+          "bytes": 325
+        },
+        {
+          "url": "/api/products/6939bdf396e4c874c38c2e65",
+          "start": 41.100000001490116,
+          "duration": 19,
+          "bytes": 1152047
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 41.5,
+          "duration": 13.600000001490116,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 55.600000001490116,
+          "duration": 8.599999999627471,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 6080,
+          "duration": 5.699999999254942
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile/huile-cheveux/6939bdf396e4c874c38c2e65",
+      "mobile": false,
+      "warm": true,
+      "productsReady": 192,
+      "documentBytes": 39059,
+      "lcp": 188,
+      "cls": 0.007843889317558299,
+      "lcpElement": "<img alt=\"HUILE LOCKS\" width=\"500\" height=\"600\" decoding=\"async\" data-nimg=\"1\" class=\"w-full h-auto object-contain transition-opacity duration-300\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAp0AAAPECAIAAABjQRfiAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemt",
+      "ttfb": 6.599999999627471,
+      "load": 26.59999999962747,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 31.299999998882413,
+          "duration": 0.6000000014901161,
+          "bytes": 0
+        },
+        {
+          "url": "/api/products/6939bdf396e4c874c38c2e65",
+          "start": 31.90000000037253,
+          "duration": 21,
+          "bytes": 1152047
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 32.29999999888241,
+          "duration": 17.40000000037253,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 144.69999999925494,
+          "duration": 9.400000000372529,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "mobile": true,
+      "warm": false,
+      "productsReady": 55052,
+      "documentBytes": 13775467,
+      "lcp": 15720,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 105.40000000037253,
+      "load": 55048,
+      "images": 327558,
+      "js": 304316,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 55239.40000000037,
+          "duration": 163.80000000074506,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 55245,
+          "duration": 172.30000000074506,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 55425.300000000745,
+          "duration": 217.40000000037253,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 8840,
+          "duration": 1180
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1200&q=75",
+          "bytes": 28826,
+          "duration": 1502.199999999255
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1200&q=75",
+          "bytes": 23158,
+          "duration": 820.4000000003725
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1200&q=75",
+          "bytes": 26520,
+          "duration": 897.6999999992549
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1200&q=75",
+          "bytes": 44700,
+          "duration": 1256.199999999255
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=1200&q=75",
+          "bytes": 21536,
+          "duration": 820.4000000003725
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=1200&q=75",
+          "bytes": 23962,
+          "duration": 886.5
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=1200&q=75",
+          "bytes": 25542,
+          "duration": 1605.199999999255
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=1200&q=75",
+          "bytes": 33742,
+          "duration": 1801.699999999255
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fcheveux.webp&w=1200&q=75",
+          "bytes": 49596,
+          "duration": 2055.7999999988824
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=1200&q=75",
+          "bytes": 41136,
+          "duration": 1972.4000000003725
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "mobile": true,
+      "warm": true,
+      "productsReady": 51578,
+      "documentBytes": 13775467,
+      "lcp": 13728,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 101.10000000149012,
+      "load": 51575.90000000037,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 51672.300000000745,
+          "duration": 0.40000000037252903,
+          "bytes": 0
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 51674.20000000112,
+          "duration": 156.39999999850988,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 52117.20000000112,
+          "duration": 179.69999999925494,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fcheveux.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": true,
+      "warm": false,
+      "productsReady": 30233,
+      "documentBytes": 34634,
+      "lcp": 904,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 9.5,
+      "load": 5748.199999999255,
+      "images": 8840,
+      "js": 309360,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 2003.3999999985099,
+          "duration": 159.7000000011176,
+          "bytes": 325
+        },
+        {
+          "url": "/api/products?category=huile&page=1&limit=8",
+          "start": 2006.3999999985099,
+          "duration": 28028,
+          "bytes": 2568830
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 2009.199999999255,
+          "duration": 176.09999999962747,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 2187.5999999996275,
+          "duration": 207.7999999988824,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 8840,
+          "duration": 444.90000000037253
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": true,
+      "warm": true,
+      "productsReady": 807,
+      "documentBytes": 34634,
+      "lcp": 204,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 9.599999999627471,
+      "load": 250.5,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 295.30000000074506,
+          "duration": 0.19999999925494194,
+          "bytes": 0
+        },
+        {
+          "url": "/api/products?category=huile&page=1&limit=8",
+          "start": 297.69999999925494,
+          "duration": 41.30000000074506,
+          "bytes": 0
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 299.80000000074506,
+          "duration": 154.59999999962747,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 811.8000000007451,
+          "duration": 182.89999999850988,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile/huile-cheveux/6939bdf396e4c874c38c2e65",
+      "mobile": true,
+      "warm": false,
+      "productsReady": 16008,
+      "documentBytes": 39059,
+      "lcp": 15988,
+      "cls": 0.007999766675939157,
+      "lcpElement": "<img alt=\"HUILE LOCKS\" width=\"500\" height=\"600\" decoding=\"async\" data-nimg=\"1\" class=\"w-full h-auto object-contain transition-opacity duration-300\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAp0AAAPECAIAAABjQRfiAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemt",
+      "ttfb": 9.200000001117587,
+      "load": 2021.199999999255,
+      "images": 8840,
+      "js": 311350,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 2028.2999999988824,
+          "duration": 159.80000000074506,
+          "bytes": 325
+        },
+        {
+          "url": "/api/products/6939bdf396e4c874c38c2e65",
+          "start": 2030.199999999255,
+          "duration": 13861.699999999255,
+          "bytes": 1152047
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 2032.5999999996275,
+          "duration": 178.19999999925494,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 2212.699999999255,
+          "duration": 275.40000000037253,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 8840,
+          "duration": 447.19999999925494
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile/huile-cheveux/6939bdf396e4c874c38c2e65",
+      "mobile": true,
+      "warm": true,
+      "productsReady": 12464,
+      "documentBytes": 39059,
+      "lcp": 12200,
+      "cls": 0.007999766675939157,
+      "lcpElement": "<img alt=\"HUILE LOCKS\" width=\"500\" height=\"600\" decoding=\"async\" data-nimg=\"1\" class=\"w-full h-auto object-contain transition-opacity duration-300\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAp0AAAPECAIAAABjQRfiAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemt",
+      "ttfb": 9.699999999254942,
+      "load": 279,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 346.59999999962747,
+          "duration": 0.2999999988824129,
+          "bytes": 0
+        },
+        {
+          "url": "/api/products/6939bdf396e4c874c38c2e65",
+          "start": 348.19999999925494,
+          "duration": 11737.699999999255,
+          "bytes": 1152047
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 349.8999999985099,
+          "duration": 162.30000000074506,
+          "bytes": 407
+        },
+        {
+          "url": "/api/auth/_log",
+          "start": 794.6999999992549,
+          "duration": 184.09999999962747,
+          "bytes": 407
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3101/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "local_after": [
+    {
+      "path": "/",
+      "mobile": false,
+      "warm": false,
+      "productsReady": 164,
+      "documentBytes": 198681,
+      "lcp": 180,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 36.70000000111759,
+      "load": 158.7999999988824,
+      "images": 323652,
+      "js": 304641,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 175.89999999850988,
+          "duration": 5.700000001117587,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 177.09999999962747,
+          "duration": 12.099999999627471,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 6080,
+          "duration": 13.400000000372529
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1920&q=75",
+          "bytes": 53548,
+          "duration": 16.59999999962747
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1920&q=75",
+          "bytes": 44998,
+          "duration": 6.099999999627471
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1920&q=75",
+          "bytes": 48132,
+          "duration": 5.5
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=640&q=75",
+          "bytes": 9806,
+          "duration": 5.099999999627471
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=640&q=75",
+          "bytes": 11356,
+          "duration": 5.599999999627471
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1920&q=75",
+          "bytes": 82726,
+          "duration": 5.800000000745058
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=640&q=75",
+          "bytes": 11204,
+          "duration": 6.099999999627471
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=640&q=75",
+          "bytes": 15772,
+          "duration": 10.400000000372529
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=640&q=75",
+          "bytes": 16928,
+          "duration": 9.700000001117587
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fcheveux.webp&w=640&q=75",
+          "bytes": 23102,
+          "duration": 10.400000000372529
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "mobile": false,
+      "warm": true,
+      "productsReady": 79,
+      "documentBytes": 198681,
+      "lcp": 84,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 33.20000000111759,
+      "load": 75.59999999962747,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 83.20000000111759,
+          "duration": 4.699999999254942,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 83.70000000111759,
+          "duration": 7.899999998509884,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1920&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1920&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1920&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1920&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fcheveux.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=640&q=75",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": false,
+      "warm": false,
+      "productsReady": 282,
+      "documentBytes": 58647,
+      "lcp": 40,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 9.300000000745058,
+      "load": 209,
+      "images": 68574,
+      "js": 294372,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 37.59999999962747,
+          "duration": 2.599999999627471,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 38.09999999962747,
+          "duration": 4.400000000372529,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 6080,
+          "duration": 4.200000001117587
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&w=384&q=90",
+          "bytes": 30456,
+          "duration": 3.299999998882413
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6932b8cab4c3182da5fc9e30%3Fv%3D1776762966379&w=384&q=90",
+          "bytes": 17416,
+          "duration": 3.899999998509884
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F692b12ba3a24b70e9159fd43%3Fv%3D1765560762405&w=384&q=90",
+          "bytes": 14622,
+          "duration": 4.099999999627471
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": false,
+      "warm": true,
+      "productsReady": 143,
+      "documentBytes": 58647,
+      "lcp": 48,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 10,
+      "load": 32,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 35.90000000037253,
+          "duration": 4.5,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 36.40000000037253,
+          "duration": 7.299999998882413,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&w=384&q=90",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6932b8cab4c3182da5fc9e30%3Fv%3D1776762966379&w=384&q=90",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F692b12ba3a24b70e9159fd43%3Fv%3D1765560762405&w=384&q=90",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile/huile-cheveux/6939bdf396e4c874c38c2e65",
+      "mobile": false,
+      "warm": false,
+      "productsReady": 527,
+      "documentBytes": 67106,
+      "lcp": 88,
+      "cls": 0,
+      "lcpElement": "<img alt=\"HUILE LOCKS\" width=\"669\" height=\"964\" decoding=\"async\" data-nimg=\"1\" class=\"w-full h-auto object-contain transition-opacity duration-300\" sizes=\"(max-width: 1023px) calc(100vw - 64px), 500px\" srcset=\"/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&amp;w=16&amp;q=90 16w, /_next/image?url=%2Fapi%2Fpro",
+      "ttfb": 8.5,
+      "load": 441.5,
+      "images": 72166,
+      "js": 295953,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 50.19999999925494,
+          "duration": 3,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 50.5,
+          "duration": 4.800000000745058,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 6080,
+          "duration": 5.400000000372529
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&w=640&q=90",
+          "bytes": 66086,
+          "duration": 12.199999999254942
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile/huile-cheveux/6939bdf396e4c874c38c2e65",
+      "mobile": false,
+      "warm": true,
+      "productsReady": 139,
+      "documentBytes": 67106,
+      "lcp": 52,
+      "cls": 0,
+      "lcpElement": "<img alt=\"HUILE LOCKS\" width=\"669\" height=\"964\" decoding=\"async\" data-nimg=\"1\" class=\"w-full h-auto object-contain transition-opacity duration-300\" style=\"color:transparent\" sizes=\"(max-width: 1023px) calc(100vw - 64px), 500px\" srcset=\"/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&amp;w=16&amp;q=90 16w, /_n",
+      "ttfb": 8.099999999627471,
+      "load": 31.299999998882413,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 35.29999999888241,
+          "duration": 4.600000001490116,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 35.79999999888241,
+          "duration": 5.800000000745058,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&w=640&q=90",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "mobile": true,
+      "warm": false,
+      "productsReady": 5462,
+      "documentBytes": 198681,
+      "lcp": 1636,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 30.199999999254942,
+      "load": 5459.299999998882,
+      "images": 327558,
+      "js": 304641,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 2907.5999999996275,
+          "duration": 191.09999999962747,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 2912.7999999988824,
+          "duration": 388.7000000011176,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 8840,
+          "duration": 685.8000000007451
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1200&q=75",
+          "bytes": 28826,
+          "duration": 1422.699999999255
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1200&q=75",
+          "bytes": 23158,
+          "duration": 1071.5999999996275
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=1200&q=75",
+          "bytes": 21536,
+          "duration": 878
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1200&q=75",
+          "bytes": 26520,
+          "duration": 1018.0999999996275
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1200&q=75",
+          "bytes": 44700,
+          "duration": 1358.0999999996275
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=1200&q=75",
+          "bytes": 23962,
+          "duration": 2498
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=1200&q=75",
+          "bytes": 25542,
+          "duration": 2601.199999999255
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=1200&q=75",
+          "bytes": 33742,
+          "duration": 2816.89999999851
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=1200&q=75",
+          "bytes": 41136,
+          "duration": 3097.39999999851
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fcheveux.webp&w=1200&q=75",
+          "bytes": 49596,
+          "duration": 3162.5
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "mobile": true,
+      "warm": true,
+      "productsReady": 350,
+      "documentBytes": 198681,
+      "lcp": 236,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 18.59999999962747,
+      "load": 348.59999999962747,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 380.30000000074506,
+          "duration": 160.59999999962747,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 381.40000000037253,
+          "duration": 166.90000000037253,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fcheveux.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=1200&q=75",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": true,
+      "warm": false,
+      "productsReady": 4385,
+      "documentBytes": 58647,
+      "lcp": 916,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 9.599999999627471,
+      "load": 4348,
+      "images": 181244,
+      "js": 294372,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 2498.9000000003725,
+          "duration": 169,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 2501.4000000003725,
+          "duration": 175.09999999962747,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 8840,
+          "duration": 460.09999999962747
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&w=1080&q=90",
+          "bytes": 72776,
+          "duration": 1738.5999999996275
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6932b8cab4c3182da5fc9e30%3Fv%3D1776762966379&w=1080&q=90",
+          "bytes": 40656,
+          "duration": 1302.4000000003725
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F692b12ba3a24b70e9159fd43%3Fv%3D1765560762405&w=1080&q=90",
+          "bytes": 58972,
+          "duration": 2338.5
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": true,
+      "warm": true,
+      "productsReady": 325,
+      "documentBytes": 58647,
+      "lcp": 212,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 12.699999999254942,
+      "load": 251.5,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 293.80000000074506,
+          "duration": 162.30000000074506,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 295.6000000014901,
+          "duration": 167.89999999850988,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&w=1080&q=90",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6932b8cab4c3182da5fc9e30%3Fv%3D1776762966379&w=1080&q=90",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F692b12ba3a24b70e9159fd43%3Fv%3D1765560762405&w=1080&q=90",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile/huile-cheveux/6939bdf396e4c874c38c2e65",
+      "mobile": true,
+      "warm": false,
+      "productsReady": 4055,
+      "documentBytes": 67106,
+      "lcp": 2332,
+      "cls": 0,
+      "lcpElement": "<img alt=\"HUILE LOCKS\" width=\"669\" height=\"964\" decoding=\"async\" data-nimg=\"1\" class=\"w-full h-auto object-contain transition-opacity duration-300\" style=\"color:transparent\" sizes=\"(max-width: 1023px) calc(100vw - 64px), 500px\" srcset=\"/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&amp;w=16&amp;q=90 16w, /_n",
+      "ttfb": 7.200000001117587,
+      "load": 4016,
+      "images": 81616,
+      "js": 295953,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 2376,
+          "duration": 156.19999999925494,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 2378.5,
+          "duration": 167.90000000037253,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 8840,
+          "duration": 460.69999999925494
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&w=1080&q=90",
+          "bytes": 72776,
+          "duration": 2079.199999999255
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile/huile-cheveux/6939bdf396e4c874c38c2e65",
+      "mobile": true,
+      "warm": true,
+      "productsReady": 738,
+      "documentBytes": 67106,
+      "lcp": 724,
+      "cls": 0,
+      "lcpElement": "<img alt=\"HUILE LOCKS\" width=\"669\" height=\"964\" decoding=\"async\" data-nimg=\"1\" class=\"w-full h-auto object-contain transition-opacity duration-300\" sizes=\"(max-width: 1023px) calc(100vw - 64px), 500px\" srcset=\"/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&amp;w=16&amp;q=90 16w, /_next/image?url=%2Fapi%2Fpro",
+      "ttfb": 10.299999998882413,
+      "load": 257.90000000037253,
+      "images": 0,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 267,
+          "duration": 164.90000000037253,
+          "bytes": 325
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 268.80000000074506,
+          "duration": 170.09999999962747,
+          "bytes": 302
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 0,
+          "duration": 0
+        },
+        {
+          "url": "http://localhost:3102/_next/image?url=%2Fapi%2Fproduct-images%2F6939bdf396e4c874c38c2e65%3Fv%3D1776762934843&w=1080&q=90",
+          "bytes": 0,
+          "duration": 0
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "navigation": [
+    {
+      "label": "before",
+      "mobile": false,
+      "warm": false,
+      "path": "/huile/cheveux",
+      "navigationMs": 690
+    },
+    {
+      "label": "before",
+      "mobile": false,
+      "warm": true,
+      "path": "/huile/cheveux",
+      "navigationMs": 326
+    },
+    {
+      "label": "after",
+      "mobile": false,
+      "warm": false,
+      "path": "/huile/cheveux",
+      "navigationMs": 308
+    },
+    {
+      "label": "after",
+      "mobile": false,
+      "warm": true,
+      "path": "/huile/cheveux",
+      "navigationMs": 289
+    },
+    {
+      "label": "before",
+      "mobile": true,
+      "warm": false,
+      "path": "/huile/cheveux",
+      "navigationMs": 23763
+    },
+    {
+      "label": "before",
+      "mobile": true,
+      "warm": true,
+      "path": "/huile/cheveux",
+      "navigationMs": 994
+    },
+    {
+      "label": "after",
+      "mobile": true,
+      "warm": false,
+      "path": "/huile/cheveux",
+      "navigationMs": 1584
+    },
+    {
+      "label": "after",
+      "mobile": true,
+      "warm": true,
+      "path": "/huile/cheveux",
+      "navigationMs": 426
+    }
+  ],
+  "api_payload": [
+    {
+      "port": 3101,
+      "bytes": 2568530,
+      "cache": "public, s-maxage=300, stale-while-revalidate=600"
+    },
+    {
+      "port": 3102,
+      "bytes": 2363,
+      "cache": "no-store"
+    }
+  ],
+  "production_before_observations": [
+    {
+      "path": "/",
+      "mobile": false,
+      "warm": false,
+      "productsReady": 24290,
+      "lcp": 21988,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 1435.0999999996275,
+      "load": 24284.800000000745,
+      "images": 323594,
+      "js": 200574,
+      "requests": [
+        {
+          "url": "/api/auth/session",
+          "start": 24304.199999999255,
+          "duration": 1981.4000000003725
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 6080,
+          "duration": 17351.700000001118
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1920&q=75",
+          "bytes": 53584,
+          "duration": 17477.900000000373
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1920&q=75",
+          "bytes": 48094,
+          "duration": 4386.300000000745
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1920&q=75",
+          "bytes": 82668,
+          "duration": 4442.800000000745
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1920&q=75",
+          "bytes": 45000,
+          "duration": 4447.199999999255
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=640&q=75",
+          "bytes": 9806,
+          "duration": 4477.800000000745
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=640&q=75",
+          "bytes": 11204,
+          "duration": 4478.0999999996275
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=640&q=75",
+          "bytes": 11356,
+          "duration": 4565.300000000745
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=640&q=75",
+          "bytes": 16928,
+          "duration": 4480
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fcheveux.webp&w=640&q=75",
+          "bytes": 23102,
+          "duration": 4522.10000000149
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=640&q=75",
+          "bytes": 15772,
+          "duration": 4533.200000001118
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "mobile": false,
+      "warm": true,
+      "productsReady": 8532,
+      "lcp": 7340,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 3023,
+      "load": 8530.5,
+      "images": 3300,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 8549.200000001118,
+          "duration": 0.19999999925494194
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1920&q=75",
+          "bytes": 300,
+          "duration": 3494.5
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 300,
+          "duration": 3494.9000000003725
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1920&q=75",
+          "bytes": 300,
+          "duration": 2161.0999999996275
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1920&q=75",
+          "bytes": 300,
+          "duration": 2161.4000000003725
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1920&q=75",
+          "bytes": 300,
+          "duration": 2161
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=640&q=75",
+          "bytes": 300,
+          "duration": 2161.199999999255
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=640&q=75",
+          "bytes": 300,
+          "duration": 2160.7000000011176
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=640&q=75",
+          "bytes": 300,
+          "duration": 2161.0999999996275
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=640&q=75",
+          "bytes": 300,
+          "duration": 2161.199999999255
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fcheveux.webp&w=640&q=75",
+          "bytes": 300,
+          "duration": 2160.5999999996275
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=640&q=75",
+          "bytes": 300,
+          "duration": 2160.9000000003725
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": false,
+      "warm": false,
+      "productsReady": 16138,
+      "lcp": 3476,
+      "cls": 0.0046579474973744,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 937.5,
+      "load": 5694.800000000745,
+      "images": 6080,
+      "js": 318861,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 5699.5,
+          "duration": 3682.5999999996275
+        },
+        {
+          "url": "/api/products?category=huile&page=1&limit=8",
+          "start": 5700.699999999255,
+          "duration": 10274.300000000745
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 5701.4000000003725,
+          "duration": 3947.0999999996275
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 6080,
+          "duration": 2285.0999999996275
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": false,
+      "warm": true,
+      "productsReady": 3565,
+      "lcp": 1728,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 977.3000000007451,
+      "load": 1706.4000000003725,
+      "images": 300,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 1242.5,
+          "duration": 0.2999999988824129
+        },
+        {
+          "url": "/api/products?category=huile&page=1&limit=8",
+          "start": 1243.2999999988824,
+          "duration": 2136.800000000745
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 1243.699999999255,
+          "duration": 2136.0999999996275
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 300,
+          "duration": 499.19999999925494
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile/huile-cheveux/6939bdf396e4c874c38c2e65",
+      "mobile": false,
+      "warm": false,
+      "productsReady": 10710,
+      "lcp": 10372,
+      "cls": 0.007935470953628686,
+      "lcpElement": "<img alt=\"HUILE LOCKS\" width=\"500\" height=\"600\" decoding=\"async\" data-nimg=\"1\" class=\"w-full h-auto object-contain transition-opacity duration-300\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAp0AAAPECAIAAABjQRfiAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemt",
+      "ttfb": 808.8000000007451,
+      "load": 6280.800000000745,
+      "images": 6080,
+      "js": 324919,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 6291.4000000003725,
+          "duration": 3186.300000000745
+        },
+        {
+          "url": "/api/products/6939bdf396e4c874c38c2e65",
+          "start": 6293.0999999996275,
+          "duration": 4013.300000000745
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 6294,
+          "duration": 290.59999999962747
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 6080,
+          "duration": 3845.9000000003725
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile/huile-cheveux/6939bdf396e4c874c38c2e65",
+      "mobile": false,
+      "warm": true,
+      "productsReady": 11996,
+      "lcp": 11744,
+      "cls": 0.0125018368149327,
+      "lcpElement": "<img alt=\"HUILE LOCKS\" width=\"500\" height=\"600\" decoding=\"async\" data-nimg=\"1\" class=\"w-full h-auto object-contain transition-opacity duration-300\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAp0AAAPECAIAAABjQRfiAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemt",
+      "ttfb": 232.59999999962747,
+      "load": 475.30000000074506,
+      "images": 300,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 361.7000000011176,
+          "duration": 0.40000000037252903
+        },
+        {
+          "url": "/api/products/6939bdf396e4c874c38c2e65",
+          "start": 362.30000000074506,
+          "duration": 11323.199999999255
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 362.7000000011176,
+          "duration": 3136.0999999996275
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Flogo-yodi-k.png&w=256&q=75",
+          "bytes": 300,
+          "duration": 150.10000000149012
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "mobile": true,
+      "warm": false,
+      "productsReady": 58321,
+      "lcp": 19200,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 1248.4000000003725,
+      "load": 58319,
+      "images": 327578,
+      "js": 200574,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 58425.40000000037,
+          "duration": 1315.0999999996275
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 58430.09999999963,
+          "duration": 1303.9000000003725
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 8840,
+          "duration": 6684.4000000003725
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1200&q=75",
+          "bytes": 28826,
+          "duration": 7030.300000000745
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1200&q=75",
+          "bytes": 23158,
+          "duration": 8903.300000000745
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1200&q=75",
+          "bytes": 26520,
+          "duration": 9046.900000000373
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1200&q=75",
+          "bytes": 44700,
+          "duration": 9392.400000000373
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=1200&q=75",
+          "bytes": 21544,
+          "duration": 9450.300000000745
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=1200&q=75",
+          "bytes": 23976,
+          "duration": 25312.199999999255
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=1200&q=75",
+          "bytes": 25518,
+          "duration": 25178.699999999255
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=1200&q=75",
+          "bytes": 33688,
+          "duration": 25719.099999999627
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fcheveux.webp&w=1200&q=75",
+          "bytes": 49640,
+          "duration": 25875.400000000373
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=1200&q=75",
+          "bytes": 41168,
+          "duration": 25897.099999999627
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "mobile": true,
+      "warm": true,
+      "productsReady": 52979,
+      "lcp": 15184,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Femme africaine souriante avec de belles locs tenant l'huile Yodi-K\" decoding=\"async\" data-nimg=\"fill\" class=\"object-cover object-right animate-ken-burns\" style=\"position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent\" sizes=\"100vw\" srcset=\"/_next/image?url=%2Fslider%2Fbanniere_3.png&amp;w=640&amp;q=75 640",
+      "ttfb": 1391,
+      "load": 52976.59999999963,
+      "images": 3300,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 53064.09999999963,
+          "duration": 0.30000000074505806
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 300,
+          "duration": 5559.300000000745
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_3.png&w=1200&q=75",
+          "bytes": 300,
+          "duration": 5567.5
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_2.png&w=1200&q=75",
+          "bytes": 300,
+          "duration": 1852.2999999988824
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_4.png&w=1200&q=75",
+          "bytes": 300,
+          "duration": 1827.2000000011176
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fslider%2Fbanniere_1.png&w=1200&q=75",
+          "bytes": 300,
+          "duration": 1834.5
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Ftisane-detox.webp&w=1200&q=75",
+          "bytes": 300,
+          "duration": 1842.0999999996275
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fsavonnette.webp&w=1200&q=75",
+          "bytes": 300,
+          "duration": 1850.2000000011176
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Ftisane-digestive.webp&w=1200&q=75",
+          "bytes": 300,
+          "duration": 1856.9000000003725
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fcheveux.webp&w=1200&q=75",
+          "bytes": 300,
+          "duration": 3321.4000000003725
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fbaume-a-barbe.webp&w=1200&q=75",
+          "bytes": 300,
+          "duration": 3327.800000000745
+        },
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Fcategories%2Fhuile-a-barbe.webp&w=1200&q=75",
+          "bytes": 300,
+          "duration": 3334.7000000011176
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": true,
+      "warm": false,
+      "productsReady": 40949,
+      "lcp": 22340,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 1639.2000000011176,
+      "load": 24486.199999999255,
+      "images": 8840,
+      "js": 302899,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 24546.199999999255,
+          "duration": 8628.700000001118
+        },
+        {
+          "url": "/api/products?category=huile&page=1&limit=8",
+          "start": 24548.599999999627,
+          "duration": 15857.599999999627
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 24550.299999998882,
+          "duration": 8616.800000000745
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 8840,
+          "duration": 11178.800000000745
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/huile",
+      "mobile": true,
+      "warm": true,
+      "productsReady": 96988,
+      "lcp": 91676,
+      "cls": 0,
+      "lcpElement": "<img alt=\"Yodi-K - Cosmétiques et parapharmacie naturels à Dakar\" width=\"150\" height=\"125\" decoding=\"async\" data-nimg=\"1\" class=\"w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]\" style=\"color:transparent\" sizes=\"(max-width:",
+      "ttfb": 81141.80000000075,
+      "load": 91633.19999999925,
+      "images": 300,
+      "js": 0,
+      "requests": [
+        {
+          "url": "/api/currency",
+          "start": 81281.19999999925,
+          "duration": 0.30000000074505806
+        },
+        {
+          "url": "/api/products?category=huile&page=1&limit=8",
+          "start": 81284.30000000075,
+          "duration": 15230.39999999851
+        },
+        {
+          "url": "/api/auth/session",
+          "start": 81285.80000000075,
+          "duration": 10352.299999998882
+        }
+      ],
+      "imageRequests": [
+        {
+          "url": "https://www.yodi-k.com/_next/image?url=%2Flogo-yodi-k.png&w=384&q=75",
+          "bytes": 300,
+          "duration": 10438.5
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

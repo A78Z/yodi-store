@@ -19,105 +19,51 @@ interface PaginationInfo {
   hasPreviousPage: boolean;
 }
 
-const ProductCategory = ({ category }: { category: string }) => {
-  const [products, setProducts] = useState<IProduct[]>([]);
+type InitialData = { products: IProduct[]; pagination: PaginationInfo };
+const ProductCategory = ({ category, initialData }: { category: string; initialData: InitialData }) => {
+  const [products, setProducts] = useState<IProduct[]>(initialData.products);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(initialData.pagination);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(
     null
   );
-  const [hasMoreProducts, setHasMoreProducts] = useState(true);
+  const [hasMoreProducts, setHasMoreProducts] = useState(initialData.pagination.hasNextPage);
   const [availabilityFilter, setAvailabilityFilter] = useState<
     "all" | "available" | "soon"
   >("all");
   const categoryData = categories.find((cat) => cat.slug === category);
-  const { addToCart, selectedCurrency, usdRate } = useStore();
+  const addToCart = useStore(state => state.addToCart);
+  const selectedCurrency = useStore(state => state.selectedCurrency);
+  const usdRate = useStore(state => state.usdRate);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Effet pour charger les produits initiaux quand la catégorie change
+  const firstLoad = useRef(true);
   useEffect(() => {
+    if (firstLoad.current) { firstLoad.current = false; return; }
+    const controller = new AbortController();
+    setLoading(true);
     setProducts([]);
-    setSelectedSubCategory(null);
-    setHasMoreProducts(true);
-    // Appel direct sans dépendance pour éviter la boucle
-    const loadInitialProducts = async () => {
-      try {
-        setLoading(true);
-        const params = new URLSearchParams({
-          category,
-          page: "1",
-          limit: "8",
-        });
-
-        console.log("Loading initial products with params:", params.toString());
-
-        const response = await fetch(`/api/products?${params}`);
-        const data = await response.json();
-
-        console.log("Initial API Response:", data);
-
+    setPagination(null);
+    setHasMoreProducts(false);
+    const params = new URLSearchParams({ category, page: "1", limit: "8" });
+    if (selectedSubCategory && selectedSubCategory !== "all") params.set("subCategory", selectedSubCategory);
+    fetch(`/api/products?${params}`, { signal: controller.signal })
+      .then(response => { if (!response.ok) throw new Error("Products request failed"); return response.json(); })
+      .then(data => {
         setProducts(data.products || []);
         setPagination(data.pagination);
         setHasMoreProducts(data.pagination?.hasNextPage || false);
-      } catch (error) {
-        console.error("Error loading initial products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadInitialProducts();
-  }, [category]);
-
-  // Effet pour recharger quand la sous-catégorie change
-  useEffect(() => {
-    if (selectedSubCategory === null) return; // Éviter l'appel initial
-
-    setProducts([]);
-    setHasMoreProducts(true);
-
-    // Appel direct sans dépendance pour éviter la boucle
-    const loadFilteredProducts = async () => {
-      try {
-        setLoading(true);
-        const params = new URLSearchParams({
-          category,
-          page: "1",
-          limit: "8",
-        });
-
-        if (selectedSubCategory && selectedSubCategory !== "all") {
-          params.append("subCategory", selectedSubCategory);
-        }
-
-        console.log(
-          "Loading filtered products with params:",
-          params.toString()
-        );
-
-        const response = await fetch(`/api/products?${params}`);
-        const data = await response.json();
-
-        console.log("Filtered API Response:", data);
-
-        setProducts(data.products || []);
-        setPagination(data.pagination);
-        setHasMoreProducts(data.pagination?.hasNextPage || false);
-      } catch (error) {
-        console.error("Error loading filtered products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFilteredProducts();
-  }, [selectedSubCategory, category]);
+      })
+      .catch(error => { if (error.name !== "AbortError") console.error(error); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [category, selectedSubCategory]);
 
   // Fonction pour charger plus de produits
   const loadMoreProducts = useCallback(async () => {
-    if (hasMoreProducts && !loadingMore && pagination) {
+    if (hasMoreProducts && !loading && !loadingMore && pagination) {
       try {
         setLoadingMore(true);
         const params = new URLSearchParams({
@@ -146,7 +92,7 @@ const ProductCategory = ({ category }: { category: string }) => {
         setLoadingMore(false);
       }
     }
-  }, [hasMoreProducts, loadingMore, pagination, category, selectedSubCategory]);
+  }, [hasMoreProducts, loading, loadingMore, pagination, category, selectedSubCategory]);
 
   // Configuration de l'Intersection Observer pour la pagination infinie
   useEffect(() => {
@@ -357,9 +303,11 @@ const ProductCategory = ({ category }: { category: string }) => {
                   <div className="relative overflow-hidden rounded-lg">
                     <Image
                       src={product.imageUrl}
+                      quality={90}
                       alt={product.title}
                       width={220}
                       height={220}
+                      sizes="288px"
                       className={`w-72 h-64 object-cover object-center transition-transform duration-300 group-hover:scale-105 ${indisponible ? "grayscale opacity-90" : ""}`}
                     />
                     {indisponible && (

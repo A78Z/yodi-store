@@ -18,14 +18,16 @@ interface ProductCarouselProps {
 const FAVORITES_KEY = "yodi-favorites";
 
 const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
-    const [products] = useState<IProduct[]>(initialProducts);
+    const products = initialProducts;
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
     const [addedId, setAddedId] = useState<string | null>(null);
     const carouselRef = useRef<HTMLDivElement>(null);
     const addedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const { addToCart, selectedCurrency, usdRate } = useStore();
+    const addToCart = useStore(state => state.addToCart);
+    const selectedCurrency = useStore(state => state.selectedCurrency);
+    const usdRate = useStore(state => state.usdRate);
 
     const [visibleCards, setVisibleCards] = useState(4);
 
@@ -219,12 +221,12 @@ const ProductCarousel = ({ initialProducts }: ProductCarouselProps) => {
                                             <div className="relative w-full aspect-square overflow-hidden bg-[#F5F1ED]">
                                                 <Image
                                                     src={product.imageUrl}
+                                                    quality={90}
                                                     alt={formatProductName(product.title)}
                                                     fill
                                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                                                     className={`object-cover transition-transform duration-500 group-hover:scale-105 ${indisponible ? "grayscale opacity-90" : ""}`}
-                                                    priority={isPriorityImage}
-                                                    loading={isPriorityImage ? undefined : "lazy"}
+                                                    loading="lazy"
                                                     placeholder="blur"
                                                     blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
                                                     decoding={isInViewport ? "async" : "async"}

@@ -4,7 +4,6 @@ import OrderModel from "@/lib/models/order";
 import { getServerSession } from "next-auth";
 import { options } from "../../auth/[...nextauth]/option";
 
-await connectDB();
 
 export async function GET() {
   const session = await getServerSession(options);
@@ -14,6 +13,7 @@ export async function GET() {
   }
 
   try {
+    await connectDB();
     const userId = session.user?.id;
 
     // Récupérer toutes les commandes de l'utilisateur

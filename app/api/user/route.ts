@@ -4,7 +4,6 @@ import UserModel from "@/lib/models/user";
 import { options } from "../auth/[...nextauth]/option";
 import { getServerSession } from "next-auth";
 
-await connectDB();
 
 export async function GET() {
   const session = await getServerSession(options);
@@ -17,6 +16,7 @@ export async function GET() {
   }
 
   try {
+    await connectDB();
     const user = await UserModel.findById(session.user?.id).select("-password");
     
     if (!user) {

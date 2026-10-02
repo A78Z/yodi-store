@@ -64,8 +64,7 @@ const Categories = () => {
           Yodi-K Store
         </h2>
         <p className="font-josefin text-lg md:text-2xl font-medium text-gray-700 mt-2">
-          Parapharmacie en ligne <span className="font-playfair">&amp;</span>{" "}
-          Cosmétiques
+          Beauté, Soins <span className="font-playfair">&amp;</span> Bien-être
         </p>
         <p className="font-josefin text-sm md:text-base text-gray-500 mt-4 leading-relaxed">
           Découvrez notre sélection de produits 100% naturels, préparés avec
