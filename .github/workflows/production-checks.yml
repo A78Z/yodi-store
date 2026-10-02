@@ -1,0 +1,35 @@
+name: Production checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  linux-production:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --include=optional
+      - run: node --test scripts/*.test.mjs
+      - run: npm run build
+      - name: Verify production product module loads on Linux
+        shell: bash
+        run: |
+          npm run start -- --port 3100 > /tmp/yodi-production.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            code=$(curl -s -o /tmp/yodi-response.json -w '%{http_code}' http://localhost:3100/api/products/not-an-id || true)
+            if [ "$code" = "404" ]; then
+              node -e 'JSON.parse(require("fs").readFileSync("/tmp/yodi-response.json", "utf8"))'
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/yodi-production.log
+          exit 1
