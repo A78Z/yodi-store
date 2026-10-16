@@ -122,7 +122,7 @@ export default function ResetPasswordPage() {
             <div className={styles.retry}><p>Vous n’avez pas reçu le code ?</p><button type="button" onClick={restart} disabled={!!busy}>Vérifier l’adresse et renvoyer</button></div>
           </form>}
         </>}
-        {step !== "complete" && <div className={auth.signup}><p>Vous vous souvenez de votre mot de passe ?</p><Link href="/connexion">Se connecter<ArrowRight size={15} aria-hidden="true" /></Link></div>}
+        {step !== "complete" && <div className={auth.signup}><p>Vous avez votre mot de passe ?</p><Link href="/connexion">Se connecter<ArrowRight size={15} aria-hidden="true" /></Link></div>}
       </section>
     </div>
   </div></main>;
