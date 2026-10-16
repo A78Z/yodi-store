@@ -39,29 +39,30 @@ export default function ProfilePage() {
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
+      let redirecting = false;
       setLoading(true); setLoadError(false); setStats(null); setLastOrder(null); setOrderError(false);
       try {
         const responses = await Promise.allSettled(["/api/user", "/api/order/getstats", "/api/order/last"].map(url => fetch(url, { signal: controller.signal, cache: "no-store" })));
         if (controller.signal.aborted) return;
         const profile = responses[0];
         if (profile.status !== "fulfilled") throw new Error();
-        if (profile.value.status === 401) { router.replace("/connexion"); return; }
+        if (profile.value.status === 401) { redirecting = true; router.replace("/connexion"); return; }
         if (!profile.value.ok) throw new Error();
         const data = await profile.value.json();
         if (controller.signal.aborted) return;
         setUser(data);
         const statistics = responses[1];
         if (statistics.status === "fulfilled" && statistics.value.ok) {
-          const data = await statistics.value.json();
+          const data = await statistics.value.json().catch(() => null);
           if (!controller.signal.aborted) setStats(data);
         }
         const order = responses[2];
         if (order.status === "fulfilled" && order.value.ok) {
-          const data = await order.value.json();
-          if (!controller.signal.aborted) setLastOrder(data);
+          const data = await order.value.json().catch(() => null);
+          if (!controller.signal.aborted) { setLastOrder(data); setOrderError(!data); }
         } else if (!controller.signal.aborted) setOrderError(order.status !== "fulfilled" || order.value.status !== 404);
       } catch { if (!controller.signal.aborted) setLoadError(true); }
-      finally { if (!controller.signal.aborted) setLoading(false); }
+      finally { if (!controller.signal.aborted && !redirecting) setLoading(false); }
     }
     void load();
     return () => controller.abort();
