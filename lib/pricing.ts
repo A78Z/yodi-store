@@ -17,3 +17,12 @@ export function formatMoney(amountXof: number, currency: Currency, usdRate: numb
 export function productHref(product: { _id: unknown; category: string; subCategory?: string }): string {
   return `/${product.category}/${product.subCategory || "product"}/${String(product._id)}`;
 }
+
+// Keep full XOF precision until display, including when several units are ordered.
+export function cartTotals(items: ReadonlyArray<{ price: number; discount?: number; quantity: number }>) {
+  return items.reduce((totals, item) => ({
+    quantity: totals.quantity + item.quantity,
+    subtotal: totals.subtotal + discountedPrice(item.price, item.discount) * item.quantity,
+    savings: totals.savings + (item.price - discountedPrice(item.price, item.discount)) * item.quantity,
+  }), { quantity: 0, subtotal: 0, savings: 0 });
+}

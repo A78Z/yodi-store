@@ -17,6 +17,7 @@ export interface CART {
   price: number;
   quantity: number;
   category: string;
+  subCategory?: string;
   discount?: number;
   imageUrl: string;
   benefits?: string[];
