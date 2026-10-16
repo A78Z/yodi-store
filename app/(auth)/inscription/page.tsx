@@ -1,568 +1,167 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowLeft,
-  CheckCircle,
-} from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, Eye, EyeOff, LoaderCircle, Mail, ShoppingBag, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { isVerificationCode, registrationPasswordError, registrationPayload, sanitizeVerificationCode, type RegistrationFields } from "@/lib/registration-form";
+import styles from "./page.module.css";
 
-const InscriptionPage = () => {
+const initialFields: RegistrationFields = { firstname: "", lastname: "", email: "", phone: "", address: "", city: "", zip: "", country: "", password: "", confirmPassword: "" };
+
+export default function InscriptionPage() {
   const router = useRouter();
+  const [fields, setFields] = useState(initialFields);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [busy, setBusy] = useState<"register" | "verify" | "resend" | null>(null);
+  const request = useRef(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [code, setCode] = useState("");
   const [verificationError, setVerificationError] = useState("");
-  const [userEmail, setUserEmail] = useState("");
+  const verificationErrorRef = useRef<HTMLDivElement>(null);
+  const [verificationStatus, setVerificationStatus] = useState("");
+  const [verified, setVerified] = useState(false);
+  const reopenRef = useRef<HTMLButtonElement>(null);
+  const successRef = useRef<HTMLDivElement>(null);
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (redirectTimer.current) clearTimeout(redirectTimer.current); }, []);
 
-  const [formData, setFormData] = useState({
-    firstname: "",
-    lastname: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    zip: "",
-    country: "",
-    password: "",
-    confirmPassword: "",
-  });
+  function changeField(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    setFields((current) => ({ ...current, [event.target.name]: event.target.value }));
+  }
+  function showError(message: string) {
+    setError(message);
+    requestAnimationFrame(() => errorRef.current?.focus());
+  }
+  function showCodeError(message: string) {
+    setVerificationError(message);
+    requestAnimationFrame(() => verificationErrorRef.current?.focus());
+  }
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (request.current || pendingEmail || verified) return;
     setError("");
-    setSuccess("");
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères");
-      return;
-    }
-
-    setIsLoading(true);
-
+    const passwordError = registrationPasswordError(fields.password, fields.confirmPassword);
+    if (passwordError) { showError(passwordError); return; }
+    request.current = true;
+    setBusy("register");
+    const payload = registrationPayload(fields);
     try {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstname: formData.firstname,
-          lastname: formData.lastname,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          zip: formData.zip,
-          country: formData.country,
-          password: formData.password,
-        }),
-      });
-
+      const response = await fetch("/api/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await response.json();
+      if (!response.ok) { showError(data.message || "L’inscription n’a pas pu être finalisée. Veuillez réessayer."); return; }
+      setPendingEmail(payload.email);
+      setFields((current) => ({ ...current, password: "", confirmPassword: "" }));
+      setShowPassword(false);
+      setShowConfirmation(false);
+      setDialogOpen(true);
+    } catch { showError("La connexion est momentanément indisponible. Veuillez réessayer dans quelques instants."); }
+    finally { request.current = false; setBusy(null); }
+  }
 
-      if (response.ok) {
-        setSuccess(
-          "Inscription réussie ! Un code de vérification a été envoyé à votre email."
-        );
-        setUserEmail(formData.email);
-        setShowVerificationDialog(true);
-      } else {
-        setError(
-          data.message || "Une erreur est survenue lors de l'inscription"
-        );
-      }
-    } catch (error) {
-      setError("Erreur de connexion. Veuillez réessayer.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerification = async () => {
-    if (!verificationCode || verificationCode.length !== 6) {
-      setVerificationError("Veuillez entrer un code de 6 chiffres");
-      return;
-    }
-
-    setIsVerifying(true);
+  async function handleVerification(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (request.current || !pendingEmail || verified) return;
+    if (!isVerificationCode(code)) { showCodeError("Saisissez le code à 6 chiffres reçu par email."); return; }
+    request.current = true;
+    setBusy("verify");
     setVerificationError("");
-
+    setVerificationStatus("");
     try {
-      const response = await fetch("/api/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: userEmail,
-          code: verificationCode,
-        }),
-      });
-
+      const response = await fetch("/api/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: pendingEmail, code }) });
       const data = await response.json();
+      if (!response.ok) { showCodeError(data.message || "Ce code est invalide ou expiré. Vérifiez-le ou demandez un nouveau code."); return; }
+      setVerified(true);
+      setDialogOpen(false);
+      setCode("");
+      requestAnimationFrame(() => successRef.current?.focus());
+      redirectTimer.current = setTimeout(() => router.push("/connexion"), 2000);
+    } catch { showCodeError("La vérification est momentanément indisponible. Veuillez réessayer."); }
+    finally { request.current = false; setBusy(null); }
+  }
 
-      if (response.ok) {
-        setShowVerificationDialog(false);
-        setSuccess(
-          "Votre compte a été vérifié avec succès ! Vous pouvez maintenant vous connecter."
-        );
-        // Rediriger vers la page de connexion après 2 secondes
-        setTimeout(() => {
-          router.push("/connexion");
-        }, 2000);
-      } else {
-        setVerificationError(data.message || "Code de vérification invalide");
-      }
-    } catch (error) {
-      setVerificationError("Erreur de connexion. Veuillez réessayer.");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleResendCode = async () => {
+  async function handleResend() {
+    if (request.current || !pendingEmail || verified) return;
+    request.current = true;
+    setBusy("resend");
+    setVerificationError("");
+    setVerificationStatus("");
     try {
-      const response = await fetch("/api/resend-code", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: userEmail,
-        }),
-      });
+      const response = await fetch("/api/resend-code", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: pendingEmail }) });
+      const data = await response.json();
+      if (!response.ok) { showCodeError(data.message || "Le nouveau code n’a pas pu être envoyé. Veuillez réessayer."); return; }
+      setCode("");
+      setVerificationStatus("Un nouveau code a été envoyé à votre adresse email.");
+    } catch { showCodeError("L’envoi est momentanément indisponible. Veuillez réessayer."); }
+    finally { request.current = false; setBusy(null); }
+  }
 
-      if (response.ok) {
-        setSuccess("Un nouveau code a été envoyé à votre email.");
-      } else {
-        setError("Erreur lors de l'envoi du nouveau code.");
-      }
-    } catch (error) {
-      setError("Erreur de connexion. Veuillez réessayer.");
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 w-full font-josefin">
-      <div className="w-full flex flex-col items-center max-w-2xl mx-auto">
-        <div className="w-full mb-8">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-[#A36F5E] transition-colors duration-200 mb-4"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Retour à l&apos;accueil</span>
-          </Link>
-          <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 text-center">
-            Créer un compte
-          </h1>
-          <p className="text-gray-600 mt-2 text-center">
-            Rejoignez-nous et profitez de nos services
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 w-full">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{error}</p>
+  return <main className={styles.page}><div className={styles.container}>
+    <nav className={styles.breadcrumb} aria-label="Fil d’Ariane"><Link href="/">Accueil</Link><ChevronRight size={12} aria-hidden="true" /><span aria-current="page">Inscription</span></nav>
+    <div className={styles.layout}>
+      <section className={styles.welcome} aria-labelledby="welcome-title">
+        <p className={styles.eyebrow}>Maison Yodi-K · Votre compte</p>
+        <h1 id="welcome-title">Votre espace commence ici<span aria-hidden="true">.</span></h1>
+        <p className={styles.intro}>Quelques informations pour vous retrouver, et accompagner vos prochains rituels de soin.</p>
+        <ul className={styles.features}><li><UserRound size={21} strokeWidth={1.3} aria-hidden="true" /><div><strong>Vos informations réunies</strong><p>Retrouvez et mettez à jour votre profil.</p></div></li><li><ShoppingBag size={21} strokeWidth={1.3} aria-hidden="true" /><div><strong>Vos commandes à portée de main</strong><p>Consultez vos commandes et leur suivi.</p></div></li><li><Mail size={21} strokeWidth={1.3} aria-hidden="true" /><div><strong>Une dernière étape par email</strong><p>Un code vous permet de vérifier votre compte.</p></div></li></ul>
+        <Link href="/" className={styles.back}><ArrowLeft size={16} aria-hidden="true" />Retour à la boutique</Link>
+      </section>
+      <section className={styles.card} aria-labelledby="register-title">
+        <p className={styles.eyebrow}>Bienvenue chez vous</p><h2 id="register-title">Créer un compte</h2>
+        <p className={styles.description}>Complétez vos informations, puis vérifiez votre adresse email.</p>
+        {verified ? <div ref={successRef} tabIndex={-1} role="status" className={styles.success}><CheckCircle2 size={28} aria-hidden="true" /><h3>Votre compte est vérifié.</h3><p>Vous allez être redirigé vers la connexion.</p><Link href="/connexion" className={styles.primary}>Se connecter<ArrowRight size={17} aria-hidden="true" /></Link></div>
+          : pendingEmail ? <div className={styles.pending} role="status"><Mail size={28} aria-hidden="true" /><h3>Vérifiez votre adresse email.</h3><p>Un code de vérification a été envoyé à <strong>{pendingEmail}</strong>.</p><button type="button" ref={reopenRef} onClick={() => setDialogOpen(true)} className={styles.primary}>Saisir mon code<ArrowRight size={17} aria-hidden="true" /></button><p className={styles.help}>Vous pouvez rouvrir cette étape sans soumettre à nouveau votre inscription.</p></div>
+          : <form onSubmit={handleSubmit} aria-label="Création de votre compte" aria-busy={busy === "register"}>
+            <p className={styles.requiredNote}>Les champs marqués d’un astérisque (*) sont obligatoires.</p>
+            {error && <div ref={errorRef} role="alert" tabIndex={-1} className={styles.error}><p>{error}</p></div>}
+            <fieldset className={styles.section} disabled={!!busy}><legend><span className={styles.number}>01</span>Vos coordonnées</legend>
+              <div className={styles.fields}>
+                <div className={styles.field}><label htmlFor="firstname">Prénom *</label><input id="firstname" name="firstname" autoComplete="given-name" value={fields.firstname} onChange={changeField} required pattern=".*\S.*" /></div>
+                <div className={styles.field}><label htmlFor="lastname">Nom *</label><input id="lastname" name="lastname" autoComplete="family-name" value={fields.lastname} onChange={changeField} required pattern=".*\S.*" /></div>
+                <div className={styles.field}><label htmlFor="email">Adresse email *</label><input id="email" name="email" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} value={fields.email} onChange={changeField} required /></div>
+                <div className={styles.field}><label htmlFor="phone">Téléphone *</label><input id="phone" name="phone" type="tel" autoComplete="tel" value={fields.phone} onChange={changeField} required pattern=".*\S.*" /></div>
               </div>
-            )}
-
-            {success && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-700">{success}</p>
+            </fieldset>
+            <fieldset className={styles.section} disabled={!!busy}><legend><span className={styles.number}>02</span>Votre adresse</legend>
+              <div className={styles.fields}>
+                <div className={`${styles.field} ${styles.wide}`}><label htmlFor="address">Adresse *</label><input id="address" name="address" autoComplete="street-address" value={fields.address} onChange={changeField} required pattern=".*\S.*" /></div>
+                <div className={styles.field}><label htmlFor="city">Ville *</label><input id="city" name="city" autoComplete="address-level2" value={fields.city} onChange={changeField} required pattern=".*\S.*" /></div>
+                <div className={styles.field}><label htmlFor="zip">Code postal <span>(facultatif)</span></label><input id="zip" name="zip" autoComplete="postal-code" value={fields.zip} onChange={changeField} /></div>
+                <div className={`${styles.field} ${styles.wide}`}><label htmlFor="country">Pays <span>(facultatif)</span></label><select id="country" name="country" autoComplete="country-name" value={fields.country} onChange={changeField}><option value="">Choisissez votre pays</option><option value="Sénégal">Sénégal</option><option value="Canada">Canada</option></select></div>
               </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="firstname"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Prénom *
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    id="firstname"
-                    name="firstname"
-                    value={formData.firstname}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                    placeholder="Votre prénom"
-                    required
-                  />
-                </div>
+            </fieldset>
+            <fieldset className={styles.section} disabled={!!busy}><legend><span className={styles.number}>03</span>Votre mot de passe</legend>
+              <div className={styles.fields}>
+                <div className={styles.field}><label htmlFor="password">Mot de passe *</label><div className={styles.password}><input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={6} required value={fields.password} onChange={changeField} aria-describedby="password-help" /><button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"} aria-pressed={showPassword} aria-controls="password">{showPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}</button></div><p id="password-help" className={styles.help}>6 caractères minimum.</p></div>
+                <div className={styles.field}><label htmlFor="confirmPassword">Confirmer le mot de passe *</label><div className={styles.password}><input id="confirmPassword" name="confirmPassword" type={showConfirmation ? "text" : "password"} autoComplete="new-password" minLength={6} required value={fields.confirmPassword} onChange={changeField} /><button type="button" onClick={() => setShowConfirmation((visible) => !visible)} aria-label={showConfirmation ? "Masquer la confirmation du mot de passe" : "Afficher la confirmation du mot de passe"} aria-pressed={showConfirmation} aria-controls="confirmPassword">{showConfirmation ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}</button></div></div>
               </div>
-              <div>
-                <label
-                  htmlFor="lastname"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Nom *
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    id="lastname"
-                    name="lastname"
-                    value={formData.lastname}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                    placeholder="Votre nom"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email *
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                    placeholder="votre@email.com"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Téléphone *
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                    placeholder="+221 XX XXX XX XX"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="address"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Adresse *
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                  placeholder="Votre adresse complète"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label
-                  htmlFor="city"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Ville *
-                </label>
-                <input
-                  type="text"
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                  placeholder="Votre ville"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="zip"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Code postal
-                </label>
-                <input
-                  type="text"
-                  id="zip"
-                  name="zip"
-                  value={formData.zip}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                  placeholder="Code postal"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="country"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Pays
-                </label>
-                <select
-                  id="country"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200 bg-white"
-                >
-                  <option value="">Sélectionnez votre pays</option>
-                  <option value="Sénégal">Sénégal</option>
-                  {/* <option value="Mali">Mali</option>
-                  <option value="Burkina Faso">Burkina Faso</option>
-                  <option value="Côte d'Ivoire">Côte d'Ivoire</option>
-                  <option value="Guinée">Guinée</option>
-                  <option value="France">France</option> */}
-                  <option value="Canada">Canada</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Mot de passe *
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                    placeholder="Minimum 6 caractères"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Confirmer le mot de passe *
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                    placeholder="Confirmez votre mot de passe"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-[#A36F5E] to-[#916253] text-white py-4 rounded-xl font-bold text-lg hover:from-[#916253] hover:to-[#A36F5E] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Inscription en cours...
-                </>
-              ) : (
-                "Créer mon compte"
-              )}
-            </button>
-
-            <div className="text-center">
-              <p className="text-gray-600">
-                Vous avez déjà un compte ?{" "}
-                <Link
-                  href="/connexion"
-                  className="text-[#A36F5E] hover:underline font-medium"
-                >
-                  Se connecter
-                </Link>
-              </p>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* Dialog de vérification */}
-      <Dialog
-        open={showVerificationDialog}
-        onOpenChange={setShowVerificationDialog}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-[#A36F5E]" />
-              Vérification de votre compte
-            </DialogTitle>
-            <DialogDescription>
-              Nous avons envoyé un code de vérification à{" "}
-              <strong>{userEmail}</strong>. Entrez le code ci-dessous pour
-              activer votre compte.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {verificationError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{verificationError}</p>
-              </div>
-            )}
-
-            <div>
-              <label
-                htmlFor="verification-code"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Code de vérification
-              </label>
-              <input
-                type="text"
-                id="verification-code"
-                value={verificationCode}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-                  setVerificationCode(value);
-                }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200 text-center text-2xl font-mono tracking-widest"
-                placeholder="000000"
-                maxLength={6}
-                autoComplete="one-time-code"
-              />
-              <p className="text-xs text-gray-500 mt-1 text-center">
-                Entrez le code à 6 chiffres reçu par email
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleVerification}
-                disabled={isVerifying || verificationCode.length !== 6}
-                className="flex-1 bg-gradient-to-r from-[#A36F5E] to-[#916253] text-white py-3 rounded-xl font-bold hover:from-[#916253] hover:to-[#A36F5E] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isVerifying ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Vérification...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    Vérifier
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={handleResendCode}
-                className="px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors duration-200"
-              >
-                Renvoyer
-              </button>
-            </div>
-
-            <div className="text-center">
-              <p className="text-xs text-gray-500">
-                Vous n&apos;avez pas reçu le code ?{" "}
-                <button
-                  onClick={handleResendCode}
-                  className="text-[#A36F5E] hover:underline font-medium"
-                >
-                  Cliquez ici pour le renvoyer
-                </button>
-              </p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+            </fieldset>
+            <button type="submit" disabled={!!busy} className={styles.primary}>{busy === "register" ? <><LoaderCircle size={18} className={styles.spinner} aria-hidden="true" />Inscription en cours…</> : <>Créer mon compte<ArrowRight size={17} aria-hidden="true" /></>}</button>
+            <p className={styles.afterSubmit}>Vous recevrez ensuite un code de vérification par email.</p>
+          </form>}
+        <div className={styles.signin}><p>Vous avez déjà un compte ?</p><Link href="/connexion">Se connecter<ArrowRight size={15} aria-hidden="true" /></Link></div>
+      </section>
     </div>
-  );
-};
-
-export default InscriptionPage;
+  </div>
+    <Dialog open={dialogOpen} onOpenChange={(open) => { if (!request.current) setDialogOpen(open); }}>
+      <DialogContent className={styles.verification} showCloseButton={false} onCloseAutoFocus={(event) => { event.preventDefault(); if (!verified) reopenRef.current?.focus(); }} onEscapeKeyDown={(event) => { if (request.current) event.preventDefault(); }}>
+        <DialogClose asChild><button type="button" className={styles.close} disabled={!!busy} aria-label="Fermer la vérification"><X size={20} aria-hidden="true" /></button></DialogClose>
+        <p className={styles.eyebrow}>Une dernière étape</p><DialogTitle className={styles.dialogTitle}>Vérifiez votre compte.</DialogTitle>
+        <DialogDescription className={styles.dialogDescription}>Saisissez le code à 6 chiffres envoyé à <strong>{pendingEmail}</strong>.</DialogDescription>
+        <form onSubmit={handleVerification} aria-label="Vérification de votre compte" aria-busy={!!busy}>
+          {verificationError && <div ref={verificationErrorRef} role="alert" tabIndex={-1} className={styles.error}><p>{verificationError}</p></div>}
+          <div className={styles.field}><label htmlFor="verification-code">Code de vérification</label><input id="verification-code" name="code" className={styles.code} inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" required value={code} onChange={(event) => setCode(sanitizeVerificationCode(event.target.value))} disabled={!!busy} aria-describedby="code-help" /><p id="code-help" className={styles.help}>Entrez les 6 chiffres du code reçu par email.</p></div>
+          <p className={styles.verificationStatus} role="status">{verificationStatus}</p>
+          <button type="submit" className={styles.primary} disabled={!!busy || !isVerificationCode(code)}>{busy === "verify" ? <><LoaderCircle size={18} className={styles.spinner} aria-hidden="true" />Vérification en cours…</> : <>Vérifier mon compte<ArrowRight size={17} aria-hidden="true" /></>}</button>
+          <button type="button" className={styles.resend} onClick={handleResend} disabled={!!busy}>{busy === "resend" ? "Envoi en cours…" : "Renvoyer le code"}</button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  </main>;
+}
