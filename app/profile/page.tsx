@@ -1,595 +1,146 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Loader,
-  Mail,
-  Phone,
-  MapPin,
-  Landmark,
-  PackageCheck,
-  PackageX,
-  PackageSearch,
-  CreditCard,
-  LoaderCircle,
-  ShoppingCart,
-  Settings2,
-  Clock3,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
-import { toast } from "sonner";
-import { covertDate, OrderR, UserR } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
 import { signOut } from "next-auth/react";
+import { ArrowRight, ChevronRight, Check, Package, Pencil, UserRound, X, LogOut, LoaderCircle } from "lucide-react";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import type { OrderR, UserR } from "@/lib/utils";
+import { orderProgress, orderStatusLabel, orderSteps, profileFields, profilePasswordError, profilePayload, type ProfilePasswords } from "@/lib/profile";
+import styles from "./page.module.css";
+
+type Stats = { totalOrders: number; totalSpent: number; delivered: number; pending: number; cancelled: number; processing: number };
+const emptyPasswords = { old: "", next: "", confirm: "" };
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserR | null>(null);
-  const [stats, setStats] = useState<{
-    totalOrders: number;
-    totalSpent: number;
-    delivered: number;
-    pending: number;
-    cancelled: number;
-    processing: number;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [lastOrder, setLastOrder] = useState<OrderR | null>(null);
   const router = useRouter();
+  const [user, setUser] = useState<UserR | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [lastOrder, setLastOrder] = useState<OrderR | null>(null);
+  const [orderError, setOrderError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
   const [editData, setEditData] = useState<UserR | null>(null);
-  const [editLoading, setEditLoading] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
-  const [editSuccess, setEditSuccess] = useState<string | null>(null);
+  const [passwords, setPasswords] = useState<ProfilePasswords>(emptyPasswords);
   const [showPassword, setShowPassword] = useState(false);
-  const [passwords, setPasswords] = useState({ old: "", new: "", confirm: "" });
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const requestLock = useRef(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const deleteErrorRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
-    const fetchAll = async () => {
+    const controller = new AbortController();
+    async function load() {
+      setLoading(true); setLoadError(false); setStats(null); setLastOrder(null); setOrderError(false);
       try {
-        const [userRes, statsRes, lastOrderRes] = await Promise.all([
-          fetch("/api/user"),
-          fetch("/api/order/getstats"),
-          fetch("/api/order/last"),
-        ]);
-        if (userRes.status === 401) {
-          toast.error("Vous devez être connecté pour accéder à votre profil.");
-          router.push("/connexion");
-          return;
+        const responses = await Promise.allSettled(["/api/user", "/api/order/getstats", "/api/order/last"].map(url => fetch(url, { signal: controller.signal, cache: "no-store" })));
+        if (controller.signal.aborted) return;
+        const profile = responses[0];
+        if (profile.status !== "fulfilled") throw new Error();
+        if (profile.value.status === 401) { router.replace("/connexion"); return; }
+        if (!profile.value.ok) throw new Error();
+        const data = await profile.value.json();
+        if (controller.signal.aborted) return;
+        setUser(data);
+        const statistics = responses[1];
+        if (statistics.status === "fulfilled" && statistics.value.ok) {
+          const data = await statistics.value.json();
+          if (!controller.signal.aborted) setStats(data);
         }
-        if (!userRes.ok || !statsRes.ok) throw new Error();
-        setUser(await userRes.json());
-        setStats(await statsRes.json());
-        if (lastOrderRes.ok) setLastOrder(await lastOrderRes.json());
-      } catch {
-        toast.error("Erreur lors de la récupération du profil ou des stats");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
-  }, [router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
-        <Loader className="animate-spin text-[#FFCD00]" size={40} />
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
-  // Calcul du total dépensé uniquement sur les commandes livrées
-  const totalSpentDelivered =
-    stats?.totalSpent && stats?.delivered
-      ? stats.totalSpent * (stats.delivered / (stats.totalOrders || 1))
-      : 0;
-
-  // Initiales pour l'avatar
-  const initials =
-    `${user.firstname?.[0] || ""}${user.lastname?.[0] || ""}`.toUpperCase();
-
-  const handleDeleteAccount = async () => {
-    try {
-      setDeleteLoading(true);
-      const res = await fetch("/api/user/delete-account", {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error();
-      toast.success("Compte supprimé avec succès", {
-        duration: 3000,
-        style: {
-          color: "#10b981",
-        },
-        position: "top-right",
-      });
-      await signOut();
-      router.push("/");
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setDeleteLoading(false);
+        const order = responses[2];
+        if (order.status === "fulfilled" && order.value.ok) {
+          const data = await order.value.json();
+          if (!controller.signal.aborted) setLastOrder(data);
+        } else if (!controller.signal.aborted) setOrderError(order.status !== "fulfilled" || order.value.status !== 404);
+      } catch { if (!controller.signal.aborted) setLoadError(true); }
+      finally { if (!controller.signal.aborted) setLoading(false); }
     }
-  };
+    void load();
+    return () => controller.abort();
+  }, [attempt, router]);
 
-  return (
-    <div className="min-h-screen flex flex-col md:flex-row items-start justify-center gap-8 p-4">
-      {/* Infos utilisateur */}
-      <div className="w-full md:w-1/2 bg-white rounded-2xl shadow-sm p-8 flex flex-col gap-6 mb-8 md:mb-0 border border-gray-100">
-        <div className="flex items-center gap-6 mb-6">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center text-xl md:text-3xl font-bold text-gray-400 border border-gray-200">
-            {initials}
-          </div>
-          <div className="flex flex-col gap-1">
-            <div className="text-2xl font-bold text-black/90">
-              {user.firstname} {user.lastname}
-            </div>
-            <div className="text-sm text-gray-400 capitalize">
-              {user.country}
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <Mail size={16} /> Email
-            </span>
-            <span className="font-medium text-black/80 break-all">
-              {user.email}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <Phone size={16} /> Téléphone
-            </span>
-            <span className="font-medium text-black/80">{user.phone}</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <MapPin size={16} /> Adresse
-            </span>
-            <span className="font-medium text-black/80">
-              {user.address || (
-                <span className="text-gray-300">Non renseignée</span>
-              )}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <Landmark size={16} /> Ville / Région
-            </span>
-            <span className="font-medium text-black/80">
-              {user.city || (
-                <span className="text-gray-300">Non renseignée</span>
-              )}{" "}
-              {user.country && <span>- {user.country}</span>}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <CreditCard size={16} /> Code postal
-            </span>
-            <span className="font-medium text-black/80">
-              {user.zip || <span className="text-gray-300">Non renseigné</span>}
-            </span>
-          </div>
-        </div>
-        <button
-          className="mt-6 px-6 py-2 rounded bg-[#FFCD00] text-black font-semibold hover:bg-black hover:text-[#FFCD00] transition-colors w-fit"
-          onClick={() => {
-            setEditData(user);
-            setEditOpen(true);
-            setEditError(null);
-            setEditSuccess(null);
-            setPasswords({ old: "", new: "", confirm: "" });
-          }}
-        >
-          Modifier
-        </button>
-      </div>
-      {/* Stats commandes */}
-      <div className="w-full md:w-1/2 flex flex-col gap-6">
-        <h2 className="text-xl font-bold text-black/80 mb-2">
-          Mes statistiques de commandes
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center gap-2 border border-gray-100">
-            <PackageSearch size={28} className="text-gray-300 mb-1" />
-            <div className="text-2xl font-bold text-black/80">
-              {stats?.totalOrders ?? 0}
-            </div>
-            <div className="text-xs text-gray-400">Commandes totales</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center gap-2 border border-gray-100">
-            <PackageCheck size={28} className="text-green-400 mb-1" />
-            <div className="text-2xl font-bold text-black/80">
-              {stats?.delivered ?? 0}
-            </div>
-            <div className="text-xs text-gray-400">Commandes livrées</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center gap-2 border border-gray-100">
-            <Loader size={28} className="text-yellow-300 mb-1" />
-            <div className="text-2xl font-bold text-black/80">
-              {stats?.pending ?? 0}
-            </div>
-            <div className="text-xs text-gray-400">En attente</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center gap-2 border border-gray-100">
-            <LoaderCircle size={28} className="text-blue-300 mb-1" />
-            <div className="text-2xl font-bold text-black/80">
-              {stats?.processing ?? 0}
-            </div>
-            <div className="text-xs text-gray-400">En cours de traitement</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center gap-2 border border-gray-100">
-            <PackageX size={28} className="text-red-300 mb-1" />
-            <div className="text-2xl font-bold text-black/80">
-              {stats?.cancelled ?? 0}
-            </div>
-            <div className="text-xs text-gray-400">Commandes annulées</div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center gap-2 border border-gray-100 mt-4">
-          <CreditCard size={28} className="text-[#FFCD00] mb-1" />
-          <div className="text-2xl font-bold text-black/80">
-            {stats?.delivered && stats?.totalSpent
-              ? (
-                  stats.totalSpent *
-                  (stats.delivered / (stats.totalOrders || 1))
-                ).toLocaleString() + " FCFA"
-              : "0 FCFA"}
-          </div>
-          <div className="text-xs text-gray-400">Total dépensé (livrées)</div>
-        </div>
-      </div>
-      {/* Tracking dernière commande */}
-      <div className="w-full md:w-1/2 flex flex-col gap-6 mt-8">
-        <h2 className="text-lg font-semibold text-black/80 mb-2">
-          Suivi de ma dernière commande
-        </h2>
-        {lastOrder ? (
-          <div className="flex flex-col gap-2">
-            <StepperOrder status={lastOrder.status} />
-            <div className="text-sm text-gray-500 mt-2">
-              Statut actuel :{" "}
-              <span className="font-semibold text-black/80">
-                {getStatusLabel(lastOrder.status)}
-              </span>
-            </div>
-            <div className="text-xs text-gray-400">
-              Commande passée le {covertDate(lastOrder.createdAt)}
-            </div>
-          </div>
-        ) : (
-          <div className="text-sm text-gray-400">
-            Aucune commande récente à afficher.
-          </div>
-        )}
-      </div>
-      {/* Modal d'édition du profil */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-lg p-6 rounded-xl max-h-[90vh] overflow-y-auto scrollbar-hide">
-          <DialogHeader>
-            <DialogTitle>Modifier mon profil</DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setEditLoading(true);
-              setEditError(null);
-              setEditSuccess(null);
-              // Validation mot de passe
-              if (passwords.new || passwords.confirm || passwords.old) {
-                if (!passwords.old || !passwords.new || !passwords.confirm) {
-                  setEditError("Tous les champs de mot de passe sont requis.");
-                  setEditLoading(false);
-                  return;
-                }
-                if (passwords.new !== passwords.confirm) {
-                  setEditError(
-                    "Les nouveaux mots de passe ne correspondent pas."
-                  );
-                  setEditLoading(false);
-                  return;
-                }
-                if (passwords.new.length < 6) {
-                  setEditError(
-                    "Le nouveau mot de passe doit contenir au moins 6 caractères."
-                  );
-                  setEditLoading(false);
-                  return;
-                }
-              }
-              // Préparation des données
-              const payload: any = {
-                firstname: editData?.firstname,
-                lastname: editData?.lastname,
-                phone: editData?.phone,
-                address: editData?.address,
-                city: editData?.city,
-                country: editData?.country,
-                zip: editData?.zip,
-              };
-              if (passwords.old && passwords.new) {
-                payload.oldPassword = passwords.old;
-                payload.newPassword = passwords.new;
-              }
-              try {
-                const res = await fetch("/api/user/update", {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(payload),
-                });
-                const data = await res.json();
-                if (!res.ok)
-                  throw new Error(
-                    data.error || "Erreur lors de la mise à jour"
-                  );
-                setEditSuccess("Profil mis à jour avec succès !");
-                setTimeout(() => setEditOpen(false), 1200);
-                // Rafraîchir les infos profil
-                setUser((u) => u && { ...u, ...payload });
-                setPasswords({ old: "", new: "", confirm: "" });
-              } catch (err: any) {
-                setEditError(err.message);
-              } finally {
-                setEditLoading(false);
-              }
-            }}
-            className="flex flex-col gap-4"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-gray-500">Prénom</label>
-                <input
-                  type="text"
-                  value={editData?.firstname || ""}
-                  onChange={(e) =>
-                    setEditData((d) => d && { ...d, firstname: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FFCD00]"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Nom</label>
-                <input
-                  type="text"
-                  value={editData?.lastname || ""}
-                  onChange={(e) =>
-                    setEditData((d) => d && { ...d, lastname: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FFCD00]"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Téléphone</label>
-                <input
-                  type="text"
-                  value={editData?.phone || ""}
-                  onChange={(e) =>
-                    setEditData((d) => d && { ...d, phone: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FFCD00]"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Adresse</label>
-                <input
-                  type="text"
-                  value={editData?.address || ""}
-                  onChange={(e) =>
-                    setEditData((d) => d && { ...d, address: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FFCD00]"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Ville</label>
-                <input
-                  type="text"
-                  value={editData?.city || ""}
-                  onChange={(e) =>
-                    setEditData((d) => d && { ...d, city: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FFCD00]"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Région</label>
-                <input
-                  type="text"
-                  value={editData?.country || ""}
-                  onChange={(e) =>
-                    setEditData((d) => d && { ...d, country: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FFCD00]"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Code postal</label>
-                <input
-                  type="text"
-                  value={editData?.zip || ""}
-                  onChange={(e) =>
-                    setEditData((d) => d && { ...d, zip: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FFCD00]"
-                />
-              </div>
-            </div>
-            <div className="border-t pt-4 mt-2">
-              <div className="font-semibold text-black/80 mb-2">
-                Changer le mot de passe
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-xs text-gray-500">
-                    Ancien mot de passe
-                  </label>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={passwords.old}
-                    onChange={(e) =>
-                      setPasswords((p) => ({ ...p, old: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FFCD00]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">
-                    Nouveau mot de passe
-                  </label>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={passwords.new}
-                    onChange={(e) =>
-                      setPasswords((p) => ({ ...p, new: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FFCD00]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">Confirmer</label>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={passwords.confirm}
-                    onChange={(e) =>
-                      setPasswords((p) => ({ ...p, confirm: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FFCD00]"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <input
-                  type="checkbox"
-                  id="showpass"
-                  checked={showPassword}
-                  onChange={(e) => setShowPassword(e.target.checked)}
-                />
-                <label
-                  htmlFor="showpass"
-                  className="text-xs text-gray-500 cursor-pointer"
-                >
-                  Afficher les mots de passe
-                </label>
-              </div>
-            </div>
-            {editError && (
-              <div className="text-red-500 text-sm mt-2">{editError}</div>
-            )}
-            {editSuccess && (
-              <div className="text-green-600 text-sm mt-2">{editSuccess}</div>
-            )}
-            <DialogFooter>
-              <button
-                type="submit"
-                className="bg-[#FFCD00] text-black px-6 py-2 rounded font-semibold hover:bg-black hover:text-[#FFCD00] transition-colors"
-                disabled={editLoading}
-              >
-                {editLoading ? "Enregistrement..." : "Enregistrer"}
-              </button>
-              <DialogClose asChild>
-                <button
-                  type="button"
-                  className="ml-2 px-6 py-2 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Annuler
-                </button>
-              </DialogClose>
-            </DialogFooter>
-          </form>
-          <button
-            className="mt-6 px-6 py-2 rounded bg-red-600 text-white font-semibold cursor-pointer hover:opacity-75"
-            onClick={handleDeleteAccount}
-            disabled={deleteLoading}
-          >
-            {deleteLoading ? "Suppression..." : "Supprimer mon compte"}
-          </button>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
+  useEffect(() => { if (deleteError) deleteErrorRef.current?.focus(); }, [deleteError]);
 
-function StepperOrder({ status }: { status: string }) {
-  const steps = [
-    {
-      key: "processing",
-      label: "Traitement",
-      icon: Settings2,
-      color: "#3B82F6",
-    },
-    { key: "pending", label: "En attente", icon: Clock3, color: "#F59E42" },
-    { key: "delivered", label: "Livrée", icon: CheckCircle2, color: "#22C55E" },
-    { key: "cancelled", label: "Annulée", icon: XCircle, color: "#EF4444" },
-  ];
-  const statusIndex = steps.findIndex(
-    (s) =>
-      status === s.key ||
-      (status === "pending" && s.key === "pending") ||
-      (status === "processing" && s.key === "processing") ||
-      (status === "delivered" && s.key === "delivered") ||
-      (status === "cancelled" && s.key === "cancelled")
-  );
-  return (
-    <div className="flex items-center gap-2 w-full">
-      {steps.map((step, idx) => {
-        const Icon = step.icon;
-        const isActive = idx < statusIndex || idx === statusIndex;
-        const color = isActive ? step.color : "#E5E7EB"; // gris clair si non atteint
-        const iconColor = isActive ? "white" : "#A3A3A3";
-        return (
-          <div key={step.key} className="flex items-center gap-2 flex-1">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-base font-bold border transition-all"
-              style={{
-                backgroundColor: isActive ? color : "#F3F4F6",
-                borderColor: isActive ? color : "#E5E7EB",
-                color: iconColor,
-              }}
-            >
-              <Icon size={22} color={iconColor} />
-            </div>
-            {idx < steps.length - 1 && (
-              <div
-                className="h-1 flex-1 rounded-full transition-all"
-                style={{
-                  backgroundColor: idx < statusIndex ? color : "#E5E7EB",
-                }}
-              ></div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function getStatusLabel(status: string) {
-  switch (status) {
-    case "processing":
-      return "En cours de traitement";
-    case "pending":
-      return "En attente";
-    case "delivered":
-      return "Livrée";
-    case "cancelled":
-      return "Annulée";
-    default:
-      return status;
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editData || requestLock.current) return;
+    setError(""); setSuccess("");
+    const validation = profilePasswordError(passwords);
+    if (validation) { setError(validation); return; }
+    requestLock.current = true; setBusy(true);
+    try {
+      const response = await fetch("/api/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(profilePayload(editData, passwords)) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Impossible d’enregistrer vos modifications.");
+      setUser(current => current ? { ...current, ...profileFields(editData) } : current);
+      setPasswords(emptyPasswords); setShowPassword(false);
+      setSuccess("Vos modifications ont été enregistrées."); setEditOpen(false);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Une erreur est survenue. Réessayez."); }
+    finally { requestLock.current = false; setBusy(false); }
   }
+
+  async function deleteAccount() {
+    if (requestLock.current) return;
+    requestLock.current = true; setDeleting(true); setDeleteError("");
+    try {
+      const response = await fetch("/api/user/delete-account", { method: "DELETE" });
+      if (!response.ok) { const data = await response.json(); throw new Error(data.error || "Impossible de supprimer votre compte."); }
+      await signOut({ callbackUrl: "/" });
+    } catch (cause) { setDeleteError(cause instanceof Error ? cause.message : "Une erreur est survenue. Réessayez."); }
+    finally { requestLock.current = false; setDeleting(false); }
+  }
+
+  return <main className={styles.page}><div className={styles.container}>
+    <nav className={styles.breadcrumb} aria-label="Fil d’Ariane"><Link href="/">Accueil</Link><ChevronRight size={12} aria-hidden="true"/><span aria-current="page">Mon compte</span></nav>
+    <header className={styles.header}><p className={styles.eyebrow}>Votre espace personnel</p><h1>Mon <span>compte</span></h1><p>Vos informations, vos commandes et le plaisir de vous retrouver.</p></header>
+    {loading ? <div className={styles.state} role="status"><LoaderCircle size={24} aria-hidden="true"/>Chargement de votre compte…</div> : loadError || !user ? <div className={styles.state}><h2>Votre compte est momentanément indisponible.</h2><p>Réessayez pour retrouver vos informations.</p><button className={styles.primary} onClick={() => setAttempt(value => value + 1)}>Réessayer</button></div> : <>
+      {success && <p role="status" className={styles.success}>{success}</p>}
+      <div className={styles.layout}>
+        <aside className={styles.sidebar}>
+          <section className={styles.card} aria-labelledby="profile-heading">
+            <div className={styles.avatar} aria-hidden="true">{`${user.firstname?.[0] || ""}${user.lastname?.[0] || ""}`.toUpperCase() || <UserRound size={26}/>}</div>
+            <p className={styles.eyebrow}>Bienvenue</p><h2 id="profile-heading" className={styles.name}>{user.firstname} {user.lastname}</h2>
+            <dl className={styles.details}>{[["Email", user.email], ["Téléphone", user.phone], ["Adresse", user.address], ["Ville", user.city], ["Région", user.country], ["Code postal", user.zip]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "Non renseigné"}</dd></div>)}</dl>
+            <Dialog open={editOpen} onOpenChange={open => { if (!busy) { setEditOpen(open); if (!open) { setPasswords(emptyPasswords); setShowPassword(false); } } }}>
+              <DialogTrigger asChild><button className={styles.secondary} onClick={() => { setEditData({ ...user }); setError(""); setPasswords(emptyPasswords); setShowPassword(false); }}><Pencil size={15} aria-hidden="true"/>Modifier mes informations</button></DialogTrigger>
+              <DialogContent className={styles.dialog} showCloseButton={false} onEscapeKeyDown={event => { if (busy) event.preventDefault(); }} onInteractOutside={event => { if (busy) event.preventDefault(); }}>
+                <DialogTitle className={styles.dialogTitle}>Mes informations</DialogTitle><DialogDescription className={styles.description}>Mettez à jour vos coordonnées. Les champs marqués d’un * sont obligatoires.</DialogDescription>
+                <DialogClose className={styles.close} aria-label="Fermer" disabled={busy}><X size={20}/></DialogClose>
+                <form onSubmit={save}><fieldset disabled={busy} className={styles.fieldset}>
+                  <div className={styles.fields}>{([ ["firstname", "Prénom", "given-name"], ["lastname", "Nom", "family-name"], ["phone", "Téléphone", "tel"], ["address", "Adresse", "street-address"], ["city", "Ville", "address-level2"], ["country", "Région", "address-level1"], ["zip", "Code postal", "postal-code"] ] as const).map(([key, label, autoComplete]) => <div className={styles.field} key={key}><label htmlFor={`profile-${key}`}>{label}{["firstname", "lastname", "phone"].includes(key) ? " *" : ""}</label><input id={`profile-${key}`} type={key === "phone" ? "tel" : "text"} autoComplete={autoComplete} required={["firstname", "lastname", "phone"].includes(key)} value={editData?.[key] || ""} onChange={event => setEditData(current => current && ({ ...current, [key]: event.target.value }))}/></div>)}</div>
+                  <h3 className={styles.passwordHeading}>Changer de mot de passe</h3><p className={styles.description}>Facultatif. Laissez ces champs vides pour conserver votre mot de passe.</p>
+                  {([ ["old", "Mot de passe actuel"], ["next", "Nouveau mot de passe"], ["confirm", "Confirmer le nouveau mot de passe"] ] as const).map(([key, label]) => <div className={styles.field} key={key}><label htmlFor={`password-${key}`}>{label}</label><input id={`password-${key}`} type={showPassword ? "text" : "password"} autoComplete={key === "old" ? "current-password" : "new-password"} minLength={key === "old" ? undefined : 6} aria-describedby={key !== "old" ? "password-help" : undefined} value={passwords[key]} onChange={event => setPasswords(current => ({ ...current, [key]: event.target.value }))}/></div>)}
+                  <p id="password-help" className={styles.description}>Au moins 6 caractères pour le nouveau mot de passe.</p><label className={styles.checkbox}><input type="checkbox" checked={showPassword} onChange={event => setShowPassword(event.target.checked)}/>Afficher les mots de passe</label>
+                  {error && <p className={styles.error} role="alert" ref={errorRef} tabIndex={-1}>{error}</p>}
+                  <div className={styles.actions}><DialogClose className={styles.secondary}>Annuler</DialogClose><button className={styles.primary} type="submit">{busy ? "Enregistrement…" : "Enregistrer"}</button></div>
+                </fieldset></form>
+              </DialogContent>
+            </Dialog>
+          </section>
+          <button className={styles.logout} onClick={() => void signOut({ callbackUrl: "/connexion" })}><LogOut size={16} aria-hidden="true"/>Se déconnecter</button>
+        </aside>
+        <div className={styles.content}>
+          <section className={styles.card} aria-labelledby="orders-heading"><div className={styles.sectionHeader}><div><p className={styles.eyebrow}>En un regard</p><h2 id="orders-heading">Mes commandes</h2></div><Link href="/profile/commandes" className={styles.ordersLink}>Tout voir<ArrowRight size={15} aria-hidden="true"/></Link></div>
+            {stats ? <><dl className={styles.stats}>{([["Commandes", stats.totalOrders], ["Livrées", stats.delivered], ["En attente", stats.pending], ["En préparation", stats.processing], ["Annulées", stats.cancelled]] as const).map(([label, value]) => <div key={label}><dd>{value}</dd><dt>{label}</dt></div>)}</dl><div className={styles.total}><div>Montant des commandes<small>Tous statuts confondus, y compris les annulations.</small></div><strong>{Number.isFinite(stats.totalSpent) ? `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(stats.totalSpent)} FCFA` : "Indisponible"}</strong></div></> : <p className={styles.description}>Les statistiques sont momentanément indisponibles.</p>}
+          </section>
+          <section className={styles.card} aria-labelledby="tracking-heading"><p className={styles.eyebrow}>Votre suivi</p><h2 id="tracking-heading">Ma dernière commande</h2>
+            {orderError ? <p className={styles.description}>Le suivi est momentanément indisponible. Rechargez la page pour réessayer.</p> : lastOrder ? <>
+              <div className={styles.orderMeta}><span>Passée le {new Date(lastOrder.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</span><span className={styles.badge}>{orderStatusLabel(lastOrder.status)}</span></div>
+              {orderProgress(lastOrder.status) >= 0 ? <ol className={styles.steps} aria-label="Suivi de la commande">{orderSteps.map((step, index) => <li key={step} className={index <= orderProgress(lastOrder.status) ? styles.active : undefined} aria-current={lastOrder.status === step ? "step" : undefined}><span aria-hidden="true">{index < orderProgress(lastOrder.status) ? <Check size={16}/> : index + 1}</span><p>{orderStatusLabel(step)}</p></li>)}</ol> : <p className={styles.description}>{lastOrder.status === "cancelled" ? "Cette commande a été annulée." : "Le suivi détaillé n’est pas disponible pour ce statut."}</p>}
+            </> : <div className={styles.empty}><span className={styles.emptyIcon}><Package size={28} strokeWidth={1.2} aria-hidden="true"/></span><h3>Votre histoire commence ici</h3><p>Vous n’avez pas encore passé de commande.</p><Link href="/" className={styles.primary}>Découvrir la boutique<ArrowRight size={16} aria-hidden="true"/></Link></div>}
+          </section>
+          <div className={styles.accountManagement}><p>Gestion du compte</p><Dialog open={deleteOpen} onOpenChange={open => { if (!deleting) { setDeleteOpen(open); setDeleteError(""); } }}><DialogTrigger asChild><button className={styles.deleteLink}>Supprimer mon compte</button></DialogTrigger><DialogContent className={styles.dialog} showCloseButton={false} onEscapeKeyDown={event => { if (deleting) event.preventDefault(); }} onInteractOutside={event => { if (deleting) event.preventDefault(); }}><DialogTitle className={styles.dialogTitle}>Supprimer mon compte ?</DialogTitle><DialogDescription className={styles.description}>Cette action supprime définitivement votre compte et vous déconnecte. Vous ne pourrez plus vous connecter avec ce compte.</DialogDescription><DialogClose disabled={deleting} className={styles.close} aria-label="Fermer"><X size={20}/></DialogClose>{deleteError && <p className={styles.error} role="alert" ref={deleteErrorRef} tabIndex={-1}>{deleteError}</p>}<div className={styles.actions}><DialogClose autoFocus disabled={deleting} className={styles.secondary}>Conserver mon compte</DialogClose><button disabled={deleting} className={styles.danger} onClick={() => void deleteAccount()}>{deleting ? "Suppression…" : "Supprimer définitivement"}</button></div></DialogContent></Dialog></div>
+        </div>
+      </div>
+    </>}
+  </div></main>;
 }
