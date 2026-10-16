@@ -1,4 +1,4 @@
-.page { background: #faf7f2; color: #302820; padding: 0 24px 96px; min-height: 65vh; font-family: var(--font-dm-sans), sans-serif; }
+.page { background: #faf7f2; color: #302820; padding: 0 24px 96px; min-height: 100vh; font-family: var(--font-dm-sans), sans-serif; }
 .container { max-width: 1080px; margin: 0 auto; }
 .page :is(a, button, input):focus-visible, .error:focus-visible { outline: 2px solid #80513f; outline-offset: 4px; }
 .breadcrumb { display: flex; align-items: center; gap: 10px; padding: 28px 0 48px; font-size: 12px; color: #68594e; }
