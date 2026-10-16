@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import {
+  DM_Sans,
+  Fraunces,
   Geist,
   Geist_Mono,
   Josefin_Sans,
@@ -35,6 +37,17 @@ const playfairDisplay = Playfair_Display({
   variable: "--font-playfair-display",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+});
+
+// Refonte — direction A « Terre & Karité » (titres Fraunces, texte DM Sans)
+const fraunces = Fraunces({
+  variable: "--font-fraunces-serif",
+  subsets: ["latin"],
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -94,7 +107,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${josefinSans.variable} ${playfairDisplay.variable} antialiased bg-white h-full`}
+        className={`${geistSans.variable} ${geistMono.variable} ${josefinSans.variable} ${playfairDisplay.variable} ${fraunces.variable} ${dmSans.variable} antialiased bg-white h-full`}
       >
         {/* Le fallback noscript du Pixel contient une image : il doit rester
             dans body pour que le navigateur conserve la structure SSR. */}
