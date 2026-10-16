@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { ShoppingCart, DollarSign, ChevronDown, Globe } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { categories } from "@/lib/sampledata";
+import { useMenuCategories } from "@/lib/use-menu-categories";
 import useStore from "@/lib/store-manage";
 import SheetMenu from "./SheetMenu";
 import SearchBar from "./SearchBar";
@@ -20,6 +20,8 @@ const Hero = () => {
     setSelectedCurrency,
     setUsdRate,
   } = useStore();
+  // Catégories visibles (≥ 1 produit actif), calculées depuis la base
+  const { categories, loaded: categoriesLoaded } = useMenuCategories();
   // usdRate est stocké dans le store pour être utilisé ailleurs dans l'application pour la conversion des prix
   const [isOpen, setIsOpen] = useState(false);
   const [isShowCart, setIsShowCart] = useState(false);
@@ -392,7 +394,11 @@ const Hero = () => {
           if (e.key === "Escape") closeMenuNow();
         }}
       >
-        <div className="flex items-center gap-0 bg-white/50 backdrop-blur-sm rounded-full px-2 py-1 shadow-sm border border-gray-100/50">
+        <div className="flex items-center gap-0 bg-white/50 backdrop-blur-sm rounded-full px-2 py-1 shadow-sm border border-gray-100/50 min-h-[52px]">
+          {/* Emplacements le temps du chargement (évite le saut de mise en page) */}
+          {!categoriesLoaded && [0, 1, 2].map((i) => (
+            <span key={i} aria-hidden="true" className="mx-2 h-4 w-16 rounded-full bg-gray-200/70 animate-pulse" />
+          ))}
           {categories.map((category) => {
             const isOpenHere = isOpen && selectedId === category.id;
             return (

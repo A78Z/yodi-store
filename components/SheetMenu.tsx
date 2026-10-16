@@ -7,11 +7,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ChevronRight, Menu } from "lucide-react";
-import { categories } from "@/lib/sampledata";
+import { useMenuCategories } from "@/lib/use-menu-categories";
 import Link from "next/link";
 
 const SheetMenu = () => {
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
+  // Catégories visibles (≥ 1 produit actif), calculées depuis la base
+  const { categories, loaded } = useMenuCategories();
 
   const toggleCategory = (categoryId: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -40,6 +42,9 @@ const SheetMenu = () => {
 
           {/* Categories List */}
           <div className="flex flex-col py-4">
+            {!loaded && [0, 1, 2].map((i) => (
+              <span key={i} aria-hidden="true" className="mx-6 my-4 h-4 w-32 rounded-full bg-gray-200/70 animate-pulse" />
+            ))}
             {categories.map((category) => (
               <div key={category.id} className="relative">
                 {/* Category Item */}

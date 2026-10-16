@@ -20,7 +20,16 @@ interface PaginationInfo {
 }
 
 type InitialData = { products: IProduct[]; pagination: PaginationInfo };
-const ProductCategory = ({ category, initialData }: { category: string; initialData: InitialData }) => {
+const ProductCategory = ({
+  category,
+  initialData,
+  visibleSubcategories,
+}: {
+  category: string;
+  initialData: InitialData;
+  // Sous-catégories ayant au moins 1 produit actif (calculées en base)
+  visibleSubcategories?: { slug: string; title: string }[];
+}) => {
   const [products, setProducts] = useState<IProduct[]>(initialData.products);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -34,7 +43,15 @@ const ProductCategory = ({ category, initialData }: { category: string; initialD
   const [availabilityFilter, setAvailabilityFilter] = useState<
     "all" | "available" | "soon"
   >("all");
-  const categoryData = categories.find((cat) => cat.slug === category);
+  const libelle = categories.find((cat) => cat.slug === category);
+  const categoryData = visibleSubcategories
+    ? {
+        title: libelle?.title ?? category,
+        subcategories: visibleSubcategories.length > 0
+          ? visibleSubcategories.map((s) => ({ ...s, id: s.slug }))
+          : undefined,
+      }
+    : libelle;
   const addToCart = useStore(state => state.addToCart);
   const selectedCurrency = useStore(state => state.selectedCurrency);
   const usdRate = useStore(state => state.usdRate);

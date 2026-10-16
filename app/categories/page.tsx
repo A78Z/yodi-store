@@ -4,7 +4,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import {
   Leaf,
-  Sprout,
   Droplet,
   Wind,
   Scissors,
@@ -17,11 +16,14 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { SITE_URL, WHATSAPP } from "@/lib/site";
+import { getVisibleUnivers } from "@/lib/catalog";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Toutes nos catégories | Yodi-K",
   description:
-    "Découvrez l'ensemble de nos catégories de cosmétiques naturels et de parapharmacie : tisanes, huiles, baumes, savons et plus.",
+    "Découvrez nos catégories de cosmétiques naturels et de parapharmacie disponibles en ligne.",
   alternates: { canonical: "/categories" },
 };
 
@@ -34,20 +36,34 @@ interface Cat {
   image?: string; // si absent → carte à icône/dégradé
 }
 
-// Liens = slugs RÉELS existants (route dynamique). Les 6 premières ont une image.
-const categories: Cat[] = [
-  { id: "tisane-detox", name: "Tisane Détox", icon: Leaf, description: "Purifiez votre corps en douceur, 100% naturel", href: "/tisane/detox", image: "/categories/tisane-detox.webp" },
-  { id: "tisane-digestive", name: "Tisane Digestive", icon: Sprout, description: "Pour une digestion saine et apaisée", href: "/tisane/digestive", image: "/categories/tisane-digestive.webp" },
-  { id: "huile-barbe", name: "Huile à Barbe", icon: Droplet, description: "Hydrate et nourrit en profondeur", href: "/huile/huile-barbe", image: "/categories/huile-a-barbe.webp" },
-  { id: "cheveux", name: "Huile Cheveux", icon: Wind, description: "Force, brillance et croissance naturelle", href: "/huile/cheveux", image: "/categories/cheveux.webp" },
-  { id: "baume-barbe", name: "Baume à Barbe", icon: Scissors, description: "Soin premium pour une barbe disciplinée", href: "/baume/baume-barbe", image: "/categories/baume-a-barbe.webp" },
-  { id: "savon", name: "Savon", icon: Sparkles, description: "Des savons doux pour une peau éclatante", href: "/savon", image: "/categories/savonnette.webp" },
-  { id: "gomme-a-levres", name: "Gomme à lèvres", icon: Heart, description: "Pour des lèvres douces et hydratées", href: "/gomme-a-levres" },
-  { id: "bain-corps", name: "Bain & Corps", icon: Droplets, description: "Détente et fraîcheur au quotidien", href: "/bain-corps" },
-  { id: "bebe-maman", name: "Bébé & Maman", icon: Baby, description: "Soins doux pour eux", href: "/bebe-maman" },
-];
+// Présentation par catégorie (icône, accroche, visuel). La LISTE affichée vient
+// de la base : seules les catégories visibles avec au moins 1 produit actif.
+const PRESENTATION: Record<string, { icon: LucideIcon; description: string; image?: string }> = {
+  tisane: { icon: Leaf, description: "Tisanes pour votre bien-être au quotidien", image: "/categories/tisane-detox.webp" },
+  huile: { icon: Droplet, description: "Huiles pour la barbe et les cheveux", image: "/categories/huile-a-barbe.webp" },
+  baume: { icon: Scissors, description: "Baumes pour la barbe et les cheveux", image: "/categories/baume-a-barbe.webp" },
+  savon: { icon: Sparkles, description: "Des savons doux pour la peau", image: "/categories/savonnette.webp" },
+  "gomme-a-levres": { icon: Heart, description: "Pour des lèvres douces et hydratées" },
+  "bain-corps": { icon: Droplets, description: "Soins pour le bain et le corps" },
+  "bebe-maman": { icon: Baby, description: "Soins doux pour eux" },
+};
 
-const CategoriesPage = () => {
+const plural = (n: number) => `${n} produit${n > 1 ? "s" : ""}`;
+
+const CategoriesPage = async () => {
+  const univers = await getVisibleUnivers().catch((error) => {
+    console.error("Error fetching visible categories:", error);
+    return [];
+  });
+  const categories: Cat[] = univers.map((u) => ({
+    id: u.slug,
+    name: u.title,
+    icon: PRESENTATION[u.slug]?.icon ?? Wind,
+    description: `${PRESENTATION[u.slug]?.description ?? u.title} · ${plural(u.productCount)}`,
+    href: `/${u.slug}`,
+    image: PRESENTATION[u.slug]?.image ?? u.imageUrl,
+  }));
+
   return (
     <main className="pb-24">
       {/* En-tête */}
