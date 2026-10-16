@@ -1,15 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { IProduct } from "@/lib/models/product";
-import { categories } from "@/lib/sampledata";
-import Image from "next/image";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import useStore from "@/lib/store-manage";
-import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
-import { trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
-import NotifyButton from "@/components/NotifyButton";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowUpRight, ChevronRight, SlidersHorizontal, X } from "lucide-react";
+import type { IProduct } from "@/lib/models/product";
+import HomeProductCard from "@/components/home/HomeProductCard";
+import styles from "./ProductCategory.module.css";
 
 interface PaginationInfo {
   currentPage: number;
@@ -19,437 +16,134 @@ interface PaginationInfo {
   hasPreviousPage: boolean;
 }
 
-type InitialData = { products: IProduct[]; pagination: PaginationInfo };
-const ProductCategory = ({
-  category,
-  initialData,
-  visibleSubcategories,
-}: {
+type Props = {
   category: string;
-  initialData: InitialData;
-  // Sous-catégories ayant au moins 1 produit actif (calculées en base)
-  visibleSubcategories?: { slug: string; title: string }[];
-}) => {
-  const [products, setProducts] = useState<IProduct[]>(initialData.products);
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState(false);
-  const [retry, setRetry] = useState(0);
-  const [pagination, setPagination] = useState<PaginationInfo | null>(initialData.pagination);
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(
-    null
-  );
-  const [hasMoreProducts, setHasMoreProducts] = useState(initialData.pagination.hasNextPage);
-  const [availabilityFilter, setAvailabilityFilter] = useState<
-    "all" | "available" | "soon"
-  >("all");
-  const libelle = categories.find((cat) => cat.slug === category);
-  const categoryData = visibleSubcategories
-    ? {
-        title: libelle?.title ?? category,
-        subcategories: visibleSubcategories.length > 0
-          ? visibleSubcategories.map((s) => ({ ...s, id: s.slug }))
-          : undefined,
-      }
-    : libelle;
-  const addToCart = useStore(state => state.addToCart);
-  const selectedCurrency = useStore(state => state.selectedCurrency);
-  const usdRate = useStore(state => state.usdRate);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
-
-  const firstLoad = useRef(true);
-  useEffect(() => {
-    if (firstLoad.current) { firstLoad.current = false; return; }
-    const controller = new AbortController();
-    setLoading(true);
-    setError(false);
-    setProducts([]);
-    setPagination(null);
-    setHasMoreProducts(false);
-    const params = new URLSearchParams({ category, page: "1", limit: "8" });
-    if (selectedSubCategory && selectedSubCategory !== "all") params.set("subCategory", selectedSubCategory);
-    fetch(`/api/products?${params}`, { signal: controller.signal })
-      .then(response => { if (!response.ok) throw new Error("Products request failed"); return response.json(); })
-      .then(data => {
-        setProducts(data.products || []);
-        setPagination(data.pagination);
-        setHasMoreProducts(data.pagination?.hasNextPage || false);
-      })
-      .catch(error => { if (error.name !== "AbortError") setError(true); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
-  }, [category, selectedSubCategory, retry]);
-
-  // Fonction pour charger plus de produits
-  const loadMoreProducts = useCallback(async () => {
-    if (hasMoreProducts && !loading && !loadingMore && pagination) {
-      try {
-        setLoadingMore(true);
-        const params = new URLSearchParams({
-          category,
-          page: (pagination.currentPage + 1).toString(),
-          limit: "8",
-        });
-
-        if (selectedSubCategory && selectedSubCategory !== "all") {
-          params.append("subCategory", selectedSubCategory);
-        }
-
-        console.log("Loading more products with params:", params.toString());
-
-        const response = await fetch(`/api/products?${params}`);
-        if (!response.ok) throw new Error("Products request failed");
-        const data = await response.json();
-
-        console.log("Load more API Response:", data);
-
-        setProducts((prev) => [...prev, ...(data.products || [])]);
-        setPagination(data.pagination);
-        setHasMoreProducts(data.pagination?.hasNextPage || false);
-      } catch {
-        setError(true);
-      } finally {
-        setLoadingMore(false);
-      }
-    }
-  }, [hasMoreProducts, loading, loadingMore, pagination, category, selectedSubCategory]);
-
-  // Configuration de l'Intersection Observer pour la pagination infinie
-  useEffect(() => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMoreProducts && !loadingMore) {
-          loadMoreProducts();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [hasMoreProducts, loadingMore, loadMoreProducts]);
-
-  // Fonction pour gérer le clic sur une sous-catégorie
-  const handleSubCategoryClick = (subCategorySlug: string) => {
-    console.log(
-      "Clicked subcategory:",
-      subCategorySlug,
-      "Current:",
-      selectedSubCategory
-    );
-    setSelectedSubCategory(
-      selectedSubCategory === subCategorySlug ? null : subCategorySlug
-    );
-  };
-
-  // Fonction pour réinitialiser le filtre
-  const resetFilter = () => {
-    console.log("Resetting filter");
-    setSelectedSubCategory(null);
-  };
-
-  const handleAddToCart = (product: IProduct) => {
-    const newProduct = { ...product, quantity: 1, id: product._id as string };
-    addToCart(newProduct);
-
-    // Meta Pixel: Track AddToCart event
-    const finalPrice = product.discount
-      ? product.price - (product.price * product.discount) / 100
-      : product.price;
-    const eventId = trackAddToCart({
-      id: product._id as string,
-      name: product.title,
-      price: finalPrice,
-      quantity: 1,
-      currency: selectedCurrency,
-    });
-
-    // Send to CAPI for better tracking reliability
-    sendToCAPI("AddToCart", {
-      content_ids: [product._id as string],
-      content_name: product.title,
-      content_type: "product",
-      value: finalPrice,
-      currency: selectedCurrency,
-      num_items: 1,
-    }, eventId);
-
-    toast.success("Produit ajouté au panier", {
-      duration: 3000,
-      style: {
-        color: "#10b981",
-      },
-      position: "top-right",
-    });
-  };
-
-  // Disponibles d'abord, puis "Bientôt disponible" — avec filtre de disponibilité.
-  const displayedProducts = [...products]
-    .sort(
-      (a, b) =>
-        (a.disponible !== false ? 0 : 1) - (b.disponible !== false ? 0 : 1)
-    )
-    .filter((p) => {
-      if (availabilityFilter === "available") return p.disponible !== false;
-      if (availabilityFilter === "soon") return p.disponible === false;
-      return true;
-    });
-
-  const soonCount = products.filter((p) => p.disponible === false).length;
-
-  return (
-    <div className="w-full flex flex-col items-start py-10 mx-auto max-w-7xl font-josefin px-4">
-      <h1 className="text-2xl lg:text-3xl font-bold text-black mb-4">
-        {categoryData?.title}
-      </h1>
-
-      {/* Filtre de disponibilité (affiché seulement s'il y a des produits "bientôt") */}
-      {soonCount > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Filtrer par disponibilité">
-          {([
-            { key: "all", label: "Tous" },
-            { key: "available", label: "Disponibles maintenant" },
-            { key: "soon", label: `Bientôt disponibles (${soonCount})` },
-          ] as const).map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => setAvailabilityFilter(opt.key)}
-              aria-pressed={availabilityFilter === opt.key}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                availabilityFilter === opt.key
-                  ? "bg-[#A36F5E] text-white shadow-md"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
-      {categoryData?.subcategories && (
-        <div className="w-full my-6">
-          <div className="flex flex-wrap gap-2 mb-4">
-            <button
-              onClick={resetFilter}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${selectedSubCategory === null
-                ? "bg-[#A36F5E] text-white shadow-md"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-            >
-              📋 Tous ({pagination?.totalProducts || 0})
-            </button>
-            {categoryData?.subcategories?.map((subcategory) => (
-              <button
-                key={subcategory.id}
-                onClick={() => handleSubCategoryClick(subcategory.slug)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${selectedSubCategory === subcategory.slug
-                  ? "bg-[#A36F5E] text-white shadow-md"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-              >
-                {subcategory.title}
-              </button>
-            ))}
-          </div>
-
-          {/* Indicateur de filtre actif */}
-          {selectedSubCategory && (
-            <div className="bg-[#A36F5E] text-white px-4 py-2 rounded-lg mb-4 flex items-center justify-between">
-              <span className="text-sm">
-                🔍 Filtrage par:{" "}
-                <strong>
-                  {
-                    categoryData?.subcategories?.find(
-                      (sub) => sub.slug === selectedSubCategory
-                    )?.title
-                  }
-                </strong>
-              </span>
-              <button
-                onClick={resetFilter}
-                className="text-white hover:text-gray-200 text-sm underline"
-              >
-                Effacer le filtre
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12 mb-6">
-        {loading
-          ? Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="flex flex-col h-full">
-              <div className="flex-1 flex flex-col items-center gap-3">
-                <div className="w-72 h-64 bg-gray-200 animate-pulse rounded-md">
-                  <Skeleton className="w-72 h-64" />
-                  <Skeleton className="w-72 h-4" />
-                  <Skeleton className="w-72 h-4" />
-                </div>
-                <Skeleton className="w-full h-4" />
-                <Skeleton className="w-full h-4" />
-              </div>
-            </div>
-          ))
-          : displayedProducts.map((product, index) => {
-            // Construire l'URL de manière sécurisée - JAMAIS de fallback vers la catégorie seule
-            const productUrl = product.subCategory
-              ? `/${category}/${product.subCategory}`
-              : `/${category}/product/${product._id}`; // Fallback vers page produit par ID
-
-            const indisponible = product.disponible === false;
-
-            return (
-              <div
-                key={`${product._id}-${index}`}
-                className="flex flex-col h-full group"
-              >
-                {/* Zone cliquable pour la navigation (image + texte) */}
-                <Link
-                  href={productUrl}
-                  className="flex-1 flex flex-col items-center gap-3 cursor-pointer"
-                >
-                  <div className="relative overflow-hidden rounded-lg">
-                    <Image
-                      src={product.imageUrl || "/logo-yodi-k.png"}
-                      quality={90}
-                      alt={product.title}
-                      width={220}
-                      height={220}
-                      sizes="288px"
-                      className={`w-72 h-64 object-cover object-center transition-transform duration-300 group-hover:scale-105 ${indisponible ? "grayscale opacity-90" : ""}`}
-                    />
-                    {indisponible && (
-                      <span className="absolute top-2 left-2 bg-[#FF9800] text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm font-josefin">
-                        BIENTÔT DISPONIBLE
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-black text-sm font-josefin text-center group-hover:text-[#A36F5E] transition-colors">
-                    {product.title}
-                  </p>
-                  <p className="text-black text-xs font-josefin text-center line-clamp-2">
-                    {product.description}
-                  </p>
-
-                  <div className="flex items-center gap-2">
-                    {(product.discount ?? 0) > 0 && (
-                      <span className="text-gray-400 line-through text-sm font-josefin">
-                        {selectedCurrency === "XOF" ? product.price : Number(product.price / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                      </span>
-                    )}
-                    <span className="text-[#A36F5E] text-xl font-josefin font-bold">
-                      {selectedCurrency === "XOF"
-                        ? Math.round(product.price - (product.price * (product.discount ?? 0)) / 100)
-                        : Number((product.price - (product.price * (product.discount ?? 0)) / 100) / Number(usdRate || 1)).toFixed(2)}{" "}
-                      {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                    </span>
-                  </div>
-                </Link>
-
-                {/* Bouton séparé - PAS dans le Link */}
-                <div className="mt-auto pt-4">
-                  {indisponible ? (
-                    <NotifyButton
-                      productId={String(product._id)}
-                      productName={product.title}
-                      productImage={product.imageUrl}
-                      variant="card"
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleAddToCart(product)}
-                      className="bg-[#A36F5E] cursor-pointer text-white px-4 py-2 rounded-md text-sm font-josefin font-medium w-full transition-all duration-300 hover:bg-[#916253]"
-                    >
-                      Ajouter au panier
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-      </div>
-
-      {/* Élément de déclenchement pour la pagination infinie */}
-      {hasMoreProducts && !loading && (
-        <div ref={loadMoreRef} className="w-full flex justify-center py-8">
-          {loadingMore ? (
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-6 h-6 border-2 border-[#A36F5E] border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-sm text-gray-600">
-                Chargement de plus de produits...
-              </span>
-            </div>
-          ) : (
-            <div className="text-sm text-gray-500">
-              Faites défiler vers le bas pour charger plus de produits
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Skeletons de chargement pour la pagination infinie */}
-      {loadingMore && (
-        <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12 mb-6">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={`loading-skeleton-${index}`} className="flex flex-col h-full">
-              <div className="flex-1 flex flex-col items-center gap-3">
-                <Skeleton className="w-72 h-64" />
-                <Skeleton className="w-full h-4" />
-                <Skeleton className="w-3/4 h-3" />
-                <div className="flex items-center gap-2 w-full">
-                  <Skeleton className="w-16 h-6" />
-                  <Skeleton className="w-20 h-6" />
-                </div>
-                <Skeleton className="w-full h-10 mt-4" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Message quand il n'y a plus de produits */}
-      {!hasMoreProducts && products.length > 0 && (
-        <div className="w-full text-center py-8">
-          <span className="text-sm text-gray-500">
-            Tous les produits ont été chargés ({pagination?.totalProducts}{" "}
-            produit{pagination?.totalProducts !== 1 ? "s" : ""})
-          </span>
-        </div>
-      )}
-
-      {error && (
-        <div role="alert" className="w-full text-center py-8 text-gray-500">
-          <p>Impossible de charger les produits pour le moment.</p>
-          <button onClick={() => setRetry(value => value + 1)} className="mt-4 rounded-full border border-[#A36F5E] px-6 py-2 text-[#A36F5E]">Réessayer</button>
-        </div>
-      )}
-
-      {/* Message quand aucun produit n'est trouvé */}
-      {!loading && !error && products.length === 0 && (
-        <div className="w-full text-center py-8">
-          <span className="text-sm text-gray-500">
-            {selectedSubCategory
-              ? `Aucun produit trouvé pour la sous-catégorie "${categoryData?.subcategories?.find((sub) => sub.slug === selectedSubCategory)?.title}"`
-              : "Aucun produit trouvé pour cette catégorie"}
-          </span>
-        </div>
-      )}
-    </div>
-  );
+  title: string;
+  initialData: { products: IProduct[]; pagination: PaginationInfo };
+  subcategories: { slug: string; title: string }[];
+  selectedSubcategory: string | null;
+  sort: string;
 };
 
-export default ProductCategory;
+export default function ProductCategory({ category, title, initialData, subcategories, selectedSubcategory, sort }: Props) {
+  const router = useRouter();
+  const [products, setProducts] = useState(initialData.products);
+  const [pagination, setPagination] = useState(initialData.pagination);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(false);
+  const [availability, setAvailability] = useState("all");
+  const lock = useRef(false);
+  const controller = useRef<AbortController | null>(null);
+  const sentinel = useRef<HTMLDivElement>(null);
+  const selected = subcategories.find((sub) => sub.slug === selectedSubcategory);
+  const total = pagination.totalProducts;
+  const hasUpcoming = products.some((product) => product.disponible === false);
+  const displayed = products.filter((product) => availability === "all"
+    || (availability === "available" ? product.disponible !== false : product.disponible === false));
+
+  const hrefFor = (sub: string | null, order = sort) => {
+    const params = new URLSearchParams();
+    if (sub) params.set("soin", sub);
+    if (order !== "newest") params.set("tri", order);
+    return `/${category}${params.size ? `?${params}` : ""}`;
+  };
+
+  const loadMore = useCallback(async () => {
+    if (lock.current || !pagination.hasNextPage) return;
+    lock.current = true;
+    const request = new AbortController();
+    controller.current = request;
+    setLoadingMore(true);
+    setError(false);
+    try {
+      const params = new URLSearchParams({ category, sort, page: String(pagination.currentPage + 1), limit: "8" });
+      if (selectedSubcategory) params.set("subCategory", selectedSubcategory);
+      const response = await fetch(`/api/products?${params}`, { signal: request.signal });
+      if (!response.ok) throw new Error("Products request failed");
+      const data = await response.json();
+      if (request.signal.aborted) return;
+      setProducts((previous) => {
+        const known = new Set(previous.map((product) => String(product._id)));
+        return [...previous, ...data.products.filter((product: IProduct) => !known.has(String(product._id)))];
+      });
+      setPagination(data.pagination);
+    } catch {
+      if (!request.signal.aborted) setError(true);
+    } finally {
+      if (!request.signal.aborted) { lock.current = false; setLoadingMore(false); }
+    }
+  }, [category, selectedSubcategory, sort, pagination]);
+
+  useEffect(() => () => controller.current?.abort(), []);
+  useEffect(() => {
+    if (!pagination.hasNextPage || error || loadingMore || !sentinel.current) return;
+    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) void loadMore(); }, { rootMargin: "120px" });
+    observer.observe(sentinel.current);
+    return () => observer.disconnect();
+  }, [loadMore, pagination.hasNextPage, error, loadingMore]);
+
+  return (
+    <main className={styles.page}>
+      <div className={styles.container}>
+        <nav aria-label="Fil d’Ariane" className={styles.breadcrumb}>
+          <ol><li><Link href="/">Accueil</Link></li><li><ChevronRight size={12} aria-hidden="true" /><Link href="/categories">Boutique</Link></li><li><ChevronRight size={12} aria-hidden="true" /><span aria-current="page">{title}</span></li></ol>
+        </nav>
+
+        <header className={styles.heading}>
+          <div><p className={styles.eyebrow}>Maison Yodi-K · La boutique</p><h1>{title}</h1></div>
+          <div className={styles.intro}><p>Explorez nos soins, à votre rythme.</p><Link href="/categories">Tous nos univers <ArrowUpRight size={16} aria-hidden="true" /></Link></div>
+        </header>
+
+        <section aria-label="Catalogue et filtres" className={styles.catalog}>
+          <div className={styles.toolbar}>
+            <div className={styles.filters} aria-label="Filtrer par sous-catégorie">
+              <Link href={hrefFor(null)} className={styles.filter} aria-current={!selected ? "true" : undefined}>Tous les produits</Link>
+              {subcategories.map((sub) => <Link key={sub.slug} href={hrefFor(sub.slug)} className={styles.filter}
+                aria-current={selectedSubcategory === sub.slug ? "true" : undefined}>{sub.title}</Link>)}
+            </div>
+            <div className={styles.sort}>
+              <SlidersHorizontal size={15} aria-hidden="true" />
+              <label htmlFor="category-sort">Trier par</label>
+              <select id="category-sort" value={sort} onChange={(event) => router.push(hrefFor(selectedSubcategory, event.target.value), { scroll: false })}>
+                <option value="newest">Les plus récents</option>
+                <option value="price-asc">Prix croissant</option>
+                <option value="price-desc">Prix décroissant</option>
+              </select>
+            </div>
+          </div>
+
+          {hasUpcoming && <div role="group" aria-label="Disponibilité des produits chargés" className={styles.availability}>
+            {[["all", "Tous"], ["available", "Disponibles"], ["soon", "Bientôt disponibles"]].map(([key, label]) =>
+              <button type="button" key={key} aria-pressed={availability === key} onClick={() => setAvailability(key)}>{label}</button>)}
+          </div>}
+
+          <div className={styles.results}>
+            <p role="status" aria-live="polite">{availability === "all" ? <><strong>{total}</strong> produit{total !== 1 ? "s" : ""}{selected ? ` · ${selected.title}` : ""}</>
+              : <>{displayed.length} produit{displayed.length !== 1 ? "s" : ""} affiché{displayed.length !== 1 ? "s" : ""} parmi les produits chargés</>}</p>
+            {selected && <Link href={hrefFor(null)} className={styles.clear}>Effacer le filtre <X size={14} aria-hidden="true" /></Link>}
+          </div>
+
+          <ul className={styles.grid} aria-label="Produits" aria-busy={loadingMore}>
+            {displayed.map((product, index) => <li key={String(product._id)}><HomeProductCard product={product} priority={index < 2} /></li>)}
+          </ul>
+
+          {displayed.length === 0 && <div className={styles.empty}>
+            <h2>Aucun produit à afficher</h2>
+            <p>Essayez une autre sélection pour retrouver nos soins.</p>
+            {availability !== "all" ? <button type="button" onClick={() => setAvailability("all")}>Afficher toutes les disponibilités</button>
+              : <Link href={hrefFor(null)}>Voir tous les produits <ArrowUpRight size={16} aria-hidden="true" /></Link>}
+          </div>}
+
+          <div ref={sentinel} className={styles.pagination}>
+            {error && <p role="alert">La suite du catalogue n’a pas pu être chargée. Vous pouvez réessayer.</p>}
+            {pagination.hasNextPage && <button type="button" onClick={() => void loadMore()} disabled={loadingMore}>
+              {loadingMore ? "Chargement…" : error ? "Réessayer" : "Voir plus de produits"}
+            </button>}
+            {!pagination.hasNextPage && products.length > 0 && <p>Vous avez découvert tous les produits{selected ? " de cette sélection" : " de cet univers"}.</p>}
+            <Link className={styles.back} href="/categories"><ArrowLeft size={16} aria-hidden="true" /> Explorer les autres univers</Link>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}

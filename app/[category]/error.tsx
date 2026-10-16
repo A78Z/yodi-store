@@ -1,12 +1,17 @@
 "use client";
 
+import Link from "next/link";
+import styles from "@/components/ProductCategory.module.css";
+
 export default function CategoryError({ reset }: { reset: () => void }) {
-  return (
-    <div role="alert" className="mx-auto max-w-7xl px-4 py-10 text-center font-josefin text-gray-500">
-      <p>Impossible de charger les produits pour le moment.</p>
-      <button onClick={reset} className="mt-4 rounded-full border border-[#A36F5E] px-6 py-2 text-[#A36F5E]">
-        Réessayer
-      </button>
+  return <main className={styles.page}>
+    <div className={styles.container}>
+      <div role="alert" className={styles.empty}>
+        <h1 className="font-fraunces text-3xl">Le catalogue est momentanément indisponible</h1>
+        <p>Nous n’avons pas pu charger les produits. Réessayez dans un instant.</p>
+        <button type="button" onClick={reset}>Réessayer</button>
+      </div>
+      <Link className={styles.back} href="/">Revenir à l’accueil</Link>
     </div>
-  );
+  </main>;
 }

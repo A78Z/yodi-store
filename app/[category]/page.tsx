@@ -1,37 +1,41 @@
-import React from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProductPage } from "@/lib/product-query";
 import { categoryLabel, getVisibleUnivers, isKnownCategory } from "@/lib/catalog";
-
-export const dynamic = "force-dynamic";
 import ProductCategory from "@/components/ProductCategory";
 import CategoryComingSoon from "@/components/CategoryComingSoon";
 
-const page = async ({ params }: { params: Promise<{ category: string }> }) => {
-  const { category } = await params;
-  const [initialData, univers] = await Promise.all([
-    getProductPage(new URLSearchParams({ category, limit: "8" })),
-    getVisibleUnivers().catch((error) => {
-      console.error("Error fetching visible categories:", error);
-      return null; // en cas d'erreur : comportement d'origine
-    }),
-  ]);
+export const dynamic = "force-dynamic";
 
-  const entry = univers?.find((u) => u.slug === category);
-  if (univers && !entry) {
-    // Catégorie masquée ou sans produit actif : page propre, jamais vide.
-    if (!isKnownCategory(category) && initialData.pagination.totalProducts === 0) notFound();
+type PageProps = {
+  params: Promise<{ category: string }>;
+  searchParams: Promise<{ soin?: string; tri?: string }>;
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { category } = await params;
+  return {
+    title: `${categoryLabel(category)} | Yodi-K`,
+    alternates: { canonical: `/${encodeURIComponent(category)}` },
+  };
+}
+
+export default async function CategoryPage({ params, searchParams }: PageProps) {
+  const [{ category }, query] = await Promise.all([params, searchParams]);
+  const univers = await getVisibleUnivers();
+  const entry = univers.find((item) => item.slug === category);
+  if (!entry) {
+    if (!isKnownCategory(category)) notFound();
     return <CategoryComingSoon title={categoryLabel(category)} univers={univers} />;
   }
 
-  return (
-    <ProductCategory
-      key={category}
-      category={category}
-      initialData={initialData}
-      visibleSubcategories={entry?.subcategories}
-    />
-  );
-};
+  const selectedSubcategory = entry.subcategories.find((sub) => sub.slug === query.soin)?.slug ?? null;
+  const sort = ["newest", "price-asc", "price-desc"].includes(query.tri ?? "") ? query.tri! : "newest";
+  const filters = new URLSearchParams({ category, limit: "8", sort });
+  if (selectedSubcategory) filters.set("subCategory", selectedSubcategory);
+  const initialData = await getProductPage(filters);
 
-export default page;
+  return <ProductCategory key={`${category}/${selectedSubcategory}/${sort}`}
+    category={category} title={entry.title} initialData={initialData}
+    subcategories={entry.subcategories} selectedSubcategory={selectedSubcategory} sort={sort} />;
+}
