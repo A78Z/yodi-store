@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { ShoppingCart, DollarSign, ChevronDown, Globe } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMenuCategories } from "@/lib/use-menu-categories";
+import CategoryNavigation from "./CategoryNavigation";
 import useStore from "@/lib/store-manage";
 import SheetMenu from "./SheetMenu";
 import SearchBar from "./SearchBar";
@@ -20,44 +20,10 @@ const Hero = () => {
     setSelectedCurrency,
     setUsdRate,
   } = useStore();
-  // Catégories visibles (≥ 1 produit actif), calculées depuis la base
-  const { categories, loaded: categoriesLoaded } = useMenuCategories();
   // usdRate est stocké dans le store pour être utilisé ailleurs dans l'application pour la conversion des prix
-  const [isOpen, setIsOpen] = useState(false);
   const [isShowCart, setIsShowCart] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const cartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const menuTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Menu catégories : ouverture immédiate, fermeture différée (anti "gap")
-  const openMenu = (id: string) => {
-    if (menuTimeoutRef.current) {
-      clearTimeout(menuTimeoutRef.current);
-      menuTimeoutRef.current = null;
-    }
-    setSelectedId(id);
-    setIsOpen(true);
-  };
-
-  // Délai de 300ms avant fermeture : laisse le temps de traverser vers le sous-menu
-  const scheduleCloseMenu = () => {
-    if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
-    menuTimeoutRef.current = setTimeout(() => {
-      setIsOpen(false);
-      setSelectedId(null);
-    }, 300);
-  };
-
-  const closeMenuNow = () => {
-    if (menuTimeoutRef.current) {
-      clearTimeout(menuTimeoutRef.current);
-      menuTimeoutRef.current = null;
-    }
-    setIsOpen(false);
-    setSelectedId(null);
-  };
-
   // Handlers pour le mini-panier avec délai de fermeture
   const handleCartMouseEnter = () => {
     if (cartTimeoutRef.current) {
@@ -78,9 +44,6 @@ const Hero = () => {
     return () => {
       if (cartTimeoutRef.current) {
         clearTimeout(cartTimeoutRef.current);
-      }
-      if (menuTimeoutRef.current) {
-        clearTimeout(menuTimeoutRef.current);
       }
     };
   }, []);
@@ -144,7 +107,7 @@ const Hero = () => {
     <div className="flex flex-col items-center gap-4 md:gap-5 px-4 py-4 md:py-5 w-full max-w-7xl mx-auto">
       {/* Ligne 1 : logo (centre) + panier/devise (droite) */}
       <div className="w-full flex items-center justify-between">
-        <SheetMenu />
+        <SheetMenu key={pathname} />
         <div className="mb-0">
           <Link
             href="/"
@@ -158,14 +121,14 @@ const Hero = () => {
               height={125}
               priority
               sizes="(max-width: 768px) 110px, 150px"
-              className="w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]"
+              className="w-[88px] min-[375px]:w-[110px] md:w-[150px] h-auto object-contain drop-shadow-2xl transition-all duration-[250ms] ease-out group-hover:scale-[1.03] group-hover:opacity-85 group-active:scale-[0.98]"
             />
             {/* Glow effect autour du logo - gardé de la version améliorée */}
             <div className="absolute inset-0 bg-gradient-to-r from-amber-200/20 to-amber-300/20 rounded-full blur-xl -z-10 animate-pulse pointer-events-none"></div>
           </Link>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 min-[375px]:gap-3">
           {/* Mini-cart container - relative pour positionner le dropdown */}
           <div
             className="relative z-[60]"
@@ -271,7 +234,7 @@ const Hero = () => {
           <div className="relative currency-selector">
             <button
               onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
-              className="group relative flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-gray-200 cursor-pointer text-gray-700 rounded-full px-3 py-2.5 transition-all duration-300 hover:bg-white hover:border-[#A36F5E] hover:shadow-md text-sm font-medium"
+              className="group relative flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-gray-200 cursor-pointer text-gray-700 rounded-full px-2 min-[375px]:px-3 py-2.5 transition-all duration-300 hover:bg-white hover:border-[#A36F5E] hover:shadow-md text-sm font-medium"
             >
               <Globe className="w-4 h-4 text-[#A36F5E] transition-transform duration-300 group-hover:rotate-12" />
               <span className="font-semibold">{selectedCurrency}</span>
@@ -386,105 +349,7 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Ligne 3 : Premium Category Menu */}
-      <nav
-        aria-label="Catégories de produits"
-        className="md:flex hidden items-center justify-center relative z-50"
-        onKeyDown={(e) => {
-          if (e.key === "Escape") closeMenuNow();
-        }}
-      >
-        <div className="flex items-center gap-0 bg-white/50 backdrop-blur-sm rounded-full px-2 py-1 shadow-sm border border-gray-100/50 min-h-[52px]">
-          {/* Emplacements le temps du chargement (évite le saut de mise en page) */}
-          {!categoriesLoaded && [0, 1, 2].map((i) => (
-            <span key={i} aria-hidden="true" className="mx-2 h-4 w-16 rounded-full bg-gray-200/70 animate-pulse" />
-          ))}
-          {categories.map((category) => {
-            const isOpenHere = isOpen && selectedId === category.id;
-            return (
-              <div
-                key={category.id}
-                onMouseEnter={() => openMenu(category.id)}
-                onMouseLeave={scheduleCloseMenu}
-                onFocus={() => openMenu(category.id)}
-                onBlur={scheduleCloseMenu}
-                className="relative group"
-              >
-                <Link
-                  href={`/${category.slug}`}
-                  aria-haspopup={category.subcategories ? "true" : undefined}
-                  aria-expanded={category.subcategories ? isOpenHere : undefined}
-                  className={`
-                  relative block px-4 py-3 text-sm font-medium tracking-wide rounded-full
-                  transition-all duration-[250ms] ease-out
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A36F5E] focus-visible:ring-offset-1
-                  ${selectedId === category.id
-                      ? 'text-white bg-[#A36F5E] scale-[1.02]'
-                      : 'text-gray-700 hover:text-[#A36F5E] hover:scale-[1.02]'
-                    }
-                `}
-                >
-                  <span className="relative z-10">{category.title}</span>
-
-                  {/* Elegant underline animation */}
-                  {selectedId !== category.id && (
-                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 w-0 h-[1.5px] bg-[#A36F5E] transition-all duration-300 ease-out group-hover:w-[calc(100%-24px)] opacity-0 group-hover:opacity-100"></span>
-                  )}
-                </Link>
-
-                {/* Premium Subcategory Dropdown
-                    -> PAS de margin-top : on colle le dropdown au parent et on crée
-                       l'espace visuel via padding-top (pt-3). Ce padding agit comme
-                       "pont invisible" : le hover ne se rompt pas en traversant le gap. */}
-                {isOpenHere && category.subcategories && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    {/* Triangle centré sous le bouton actif */}
-                    <div className="absolute top-[7px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45 border-l border-t border-gray-100"></div>
-
-                    <ul
-                      role="menu"
-                      aria-label={category.title}
-                      className="relative bg-white rounded-xl border border-gray-100/80 overflow-hidden min-w-[220px] py-2 shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
-                    >
-                      {/* Subtle gradient header */}
-                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#A36F5E]/20 via-[#A36F5E]/40 to-[#A36F5E]/20"></div>
-
-                      {category.subcategories?.map((subcategory, subIndex) => (
-                        <li role="none" key={`${subcategory.id}-${subIndex}`}>
-                          <Link
-                            href={`/${category.slug}/${subcategory.slug}`}
-                            role="menuitem"
-                            className="group/item relative flex items-center gap-3 px-5 py-3 text-sm text-gray-700 cursor-pointer transition-all duration-200 ease-out hover:bg-[#FFF5F0] hover:text-[#A36F5E] hover:translate-x-1 focus-visible:outline-none focus-visible:bg-[#FFF5F0] focus-visible:text-[#A36F5E]"
-                          >
-                            {/* Hover indicator bar */}
-                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0 h-[60%] bg-[#A36F5E] rounded-r-full transition-all duration-200 group-hover/item:w-[3px]"></span>
-
-                            {/* Puce couleur marque */}
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#A36F5E]/40 transition-all duration-200 group-hover/item:bg-[#A36F5E] group-hover/item:scale-125"></span>
-
-                            <span className="font-medium tracking-wide">{subcategory.title}</span>
-
-                            {/* Arrow on hover */}
-                            <svg
-                              className="w-4 h-4 ml-auto opacity-0 -translate-x-2 transition-all duration-200 group-hover/item:opacity-100 group-hover/item:translate-x-0 text-[#A36F5E]"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              aria-hidden="true"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </nav>
+      <CategoryNavigation key={pathname} />
     </div>
   );
 };

@@ -1,119 +1,67 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { ChevronRight, Menu } from "lucide-react";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
 import { useMenuCategories } from "@/lib/use-menu-categories";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
+import styles from "./CategoryNavigation.module.css";
 
-const SheetMenu = () => {
-  const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
-  // Catégories visibles (≥ 1 produit actif), calculées depuis la base
+export default function SheetMenu() {
+  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const { categories, loaded } = useMenuCategories();
-
-  const toggleCategory = (categoryId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setOpenCategoryId(openCategoryId === categoryId ? null : categoryId);
-  };
+  const pathname = usePathname();
+  const close = () => { setOpen(false); setExpanded(null); };
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={(value) => { setOpen(value); if (!value) setExpanded(null); }}>
       <SheetTrigger asChild>
-        <button className="visible md:invisible text-[#A36F5E] cursor-pointer transition-all duration-300 hover:scale-110 hover:text-[#916253]">
-          <Menu size={36} />
+        <button type="button" className={styles.mobileTrigger} aria-label="Ouvrir la boutique">
+          <Menu size={24} aria-hidden="true" /><span>Boutique</span>
         </button>
       </SheetTrigger>
-      <SheetContent
-        side="right"
-        className="px-0 py-10 font-josefin overflow-y-auto"
-      >
-        {/* Premium Mobile Menu */}
-        <div className="flex flex-col items-stretch">
-          {/* Menu Header */}
-          <div className="px-6 pb-6 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-800 tracking-wide">Menu</h2>
-            <p className="text-xs text-gray-500 mt-1">Découvrez nos catégories</p>
-          </div>
-
-          {/* Categories List */}
-          <div className="flex flex-col py-4">
-            {!loaded && [0, 1, 2].map((i) => (
-              <span key={i} aria-hidden="true" className="mx-6 my-4 h-4 w-32 rounded-full bg-gray-200/70 animate-pulse" />
-            ))}
-            {categories.map((category) => (
-              <div key={category.id} className="relative">
-                {/* Category Item */}
-                <div className="group flex items-center justify-between px-6 py-4 transition-all duration-200 hover:bg-gray-50/80">
-                  <Link
-                    href={`/${category.slug}`}
-                    className="flex-1 text-gray-800 font-medium tracking-wide text-[15px] transition-colors duration-200 group-hover:text-[#A36F5E]"
-                  >
-                    {category.title}
-                  </Link>
-
-                  {category.subcategories && (
-                    <button
-                      onClick={(e) => toggleCategory(category.id, e)}
-                      aria-haspopup="true"
-                      aria-expanded={openCategoryId === category.id}
-                      aria-label={`Afficher les sous-catégories de ${category.title}`}
-                      className="p-2 rounded-full transition-all duration-300 hover:bg-[#A36F5E]/10"
-                    >
-                      <ChevronRight
-                        size={18}
-                        className={`text-[#A36F5E] transition-transform duration-300 ${openCategoryId === category.id ? "rotate-90" : "rotate-0"
-                          }`}
-                      />
-                    </button>
-                  )}
-                </div>
-
-                {/* Subcategories - Animated Dropdown */}
-                {category.subcategories && openCategoryId === category.id && (
-                  <div className="bg-gray-50/50 border-l-2 border-[#A36F5E]/30 ml-6 mr-4 mb-2 rounded-r-lg overflow-hidden animate-in slide-in-from-top-2 duration-200">
-                    {category.subcategories.map((subcategory, index) => (
-                      <Link
-                        key={subcategory.id}
-                        href={`/${category.slug}/${subcategory.slug}`}
-                        className="group/sub flex items-center gap-3 px-4 py-3 text-sm text-gray-600 transition-all duration-200 hover:bg-white hover:text-[#A36F5E]"
-                        style={{
-                          animationDelay: `${index * 50}ms`,
-                          animationFillMode: 'backwards'
-                        }}
-                      >
-                        {/* Dot indicator */}
-                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300 transition-all duration-200 group-hover/sub:bg-[#A36F5E] group-hover/sub:scale-125"></span>
-
-                        <span className="font-normal tracking-wide">{subcategory.title}</span>
-
-                        {/* Arrow on hover */}
-                        <svg
-                          className="w-3.5 h-3.5 ml-auto opacity-0 -translate-x-2 transition-all duration-200 group-hover/sub:opacity-100 group-hover/sub:translate-x-0 text-[#A36F5E]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-
-                {/* Subtle divider */}
-                <div className="h-px bg-gradient-to-r from-transparent via-gray-100 to-transparent mx-6"></div>
-              </div>
-            ))}
-          </div>
+      <SheetContent side="right" className={styles.mobile}>
+        <div className={styles.mobileHeader}>
+          <p className={styles.eyebrow}>Maison Yodi-K</p>
+          <SheetTitle className={styles.mobileTitle}>Boutique</SheetTitle>
+          <SheetDescription className={styles.mobileDescription}>Explorez nos soins naturels.</SheetDescription>
         </div>
+        <SheetClose asChild><button type="button" className={styles.mobileClose} aria-label="Fermer la boutique"><X size={22} aria-hidden="true" /></button></SheetClose>
+        <nav aria-label="Catégories de produits" className={styles.mobileNav}>
+          {!loaded && <p role="status" className={styles.loading}>Chargement de la boutique…</p>}
+          {loaded && !categories.length && <Link className={styles.all} href="/categories" onClick={close}>Voir la boutique <ArrowUpRight size={16} aria-hidden="true" /></Link>}
+          <ul className={styles.mobileList}>
+            {categories.map((category) => {
+              const active = pathname === `/${category.slug}` || pathname.startsWith(`/${category.slug}/`);
+              const isExpanded = expanded === category.id;
+              const panelId = `mobile-category-${category.id}`;
+              return (
+                <li key={category.id} className={styles.mobileEntry}>
+                  <div className={styles.mobileRow}>
+                    <Link href={`/${category.slug}`} className={styles.mobileCategory} onClick={close}
+                      aria-current={active ? (pathname === `/${category.slug}` ? "page" : "true") : undefined}>{category.title}</Link>
+                    {!!category.subcategories?.length && <button type="button" className={styles.toggle}
+                      aria-label={`Sous-catégories : ${category.title}`} aria-expanded={isExpanded} aria-controls={panelId}
+                      onClick={() => setExpanded(isExpanded ? null : category.id)}>
+                      <ChevronDown size={18} aria-hidden="true" className={isExpanded ? styles.rotated : undefined} />
+                    </button>}
+                  </div>
+                  {!!category.subcategories?.length && <div id={panelId} hidden={!isExpanded} className={styles.mobileSubs}>
+                    <Link href={`/${category.slug}`} className={styles.all} onClick={close}>Voir tous les produits <ArrowUpRight size={16} aria-hidden="true" /></Link>
+                    <ul className={styles.mobileList}>{category.subcategories.map((sub) => {
+                      const href = `/${category.slug}/${sub.slug}`;
+                      return <li key={sub.id}><Link className={styles.card} href={href} onClick={close}
+                        aria-current={pathname === href ? "page" : undefined}><span>{sub.title}</span><ArrowUpRight size={16} aria-hidden="true" /></Link></li>;
+                    })}</ul>
+                  </div>}
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
       </SheetContent>
     </Sheet>
   );
-};
-
-export default SheetMenu;
+}

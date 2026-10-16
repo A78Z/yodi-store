@@ -101,10 +101,10 @@ export const getVisibleUnivers = cache(async (): Promise<UniversAffiche[]> => {
         },
       },
     ]),
-    // Réglages admin (collection éventuellement absente → tout est visible).
+    // Compatibilité temporaire validée pour la Preview : réglage absent → visible.
+    // Ne pas créer de collection ou de champ depuis le site public.
     CategoryModel.find({}, { slug: 1, title: 1, visible: 1 })
-      .lean<{ slug: string; title?: string; visible?: boolean }[]>()
-      .catch(() => []),
+      .lean<{ slug: string; title?: string; visible?: boolean }[]>(),
   ]);
 
   const reglages = new Map(reglagesAdmin.map((c) => [c.slug, c]));
@@ -132,7 +132,8 @@ export const getVisibleUnivers = cache(async (): Promise<UniversAffiche[]> => {
       productCount: groupesCat.reduce((n, g) => n + g.productCount, 0),
       imageUrl: recent.imageUrl || `/api/product-images/${String(recent.productId)}?v=${version}`,
       subcategories: groupesCat
-        .filter((g) => g._id.subCategory && g.activeCount > 0)
+        .filter((g) => g._id.subCategory && g.activeCount > 0
+          && reglages.get(`${slug}/${g._id.subCategory}`)?.visible !== false)
         .map((g) => ({
           slug: g._id.subCategory as string,
           title: subCategoryLabel(g._id.subCategory as string),
