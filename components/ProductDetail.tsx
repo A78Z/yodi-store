@@ -1,458 +1,172 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
-import useStore from "@/lib/store-manage";
-import { toast } from "sonner";
-import { IProduct } from "@/lib/models/product";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowUpRight, Check, ChevronDown, ChevronRight, ImageOff, MessageCircle, Minus, Plus, ShoppingBag, Truck, X, ZoomIn } from "lucide-react";
+import { toast } from "sonner";
+import type { IProduct } from "@/lib/models/product";
+import useStore from "@/lib/store-manage";
+import { formatProductName } from "@/lib/format";
+import { discountedPrice, formatMoney } from "@/lib/pricing";
+import { remainingProductQuantity } from "@/lib/product-quantity";
+import { PHONE_COMMERCIAL, WHATSAPP } from "@/lib/site";
 import { trackViewContent, trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
 import NotifyButton from "@/components/NotifyButton";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import styles from "./ProductDetail.module.css";
 
-const ProductDetailPage = ({ initialProduct }: { initialProduct: IProduct | null }) => {
-  const addToCart = useStore(state => state.addToCart);
-  const selectedCurrency = useStore(state => state.selectedCurrency);
-  const usdRate = useStore(state => state.usdRate);
-  const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState("description");
-  const [showModal, setShowModal] = useState(false);
-  const [showMagnifier, setShowMagnifier] = useState(false);
-  const [magnifierPos, setMagnifierPos] = useState({ x: 0, y: 0 });
-  const imageRef = useRef<HTMLDivElement>(null);
-  const product = initialProduct;
-  const loading = false;
+export default function ProductDetail({ initialProduct: product, categoryTitle, subcategoryTitle }: {
+  initialProduct: IProduct; categoryTitle: string; subcategoryTitle?: string;
+}) {
+  const addToCart = useStore((state) => state.addToCart);
+  const currency = useStore((state) => state.selectedCurrency);
+  const usdRate = useStore((state) => state.usdRate);
+  const id = String(product._id);
+  const inCart = useStore((state) => state.carts.filter((item) => item.id === id).reduce((sum, item) => sum + item.quantity, 0));
+  const [requestedQuantity, setRequestedQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
+  const [addedQuantity, setAddedQuantity] = useState(0);
+  const [imageFailed, setImageFailed] = useState(false);
   const [waitingCount, setWaitingCount] = useState(0);
+  const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const name = formatProductName(product.title);
+  const price = discountedPrice(product.price, product.discount);
+  const upcoming = product.disponible === false;
+  const remaining = remainingProductQuantity(product.stock, inCart);
+  const quantity = Math.min(requestedQuantity, Math.max(1, remaining));
+  const canAdd = !upcoming && remaining > 0;
+  const photo = product.imageUrl === "/logo-yodi-k.png" ? "" : product.imageUrl || "";
 
-  const indisponible = product?.disponible === false;
-
-  // Preuve sociale : nombre de personnes en attente (si produit indisponible)
   useEffect(() => {
-    if (product && product.disponible === false) {
-      fetch(`/api/notifications/subscribe?produitId=${product._id}`)
-        .then((r) => r.json())
-        .then((d) => setWaitingCount(d.count || 0))
-        .catch(() => {});
-    }
-  }, [product]);
+    trackViewContent({ id, name: product.title, category: product.category, price, currency });
+  }, [id, product.title, product.category, price, currency]);
 
-  // Meta Pixel: Track ViewContent when product loads
+  useEffect(() => () => { if (addedTimer.current) clearTimeout(addedTimer.current); }, []);
+
   useEffect(() => {
-    if (product && !loading) {
-      const finalPrice = product.discount
-        ? product.price - (product.price * product.discount) / 100
-        : product.price;
-      trackViewContent({
-        id: product._id as string,
-        name: product.title,
-        category: product.category,
-        price: finalPrice,
-        currency: selectedCurrency,
-      });
+    if (!upcoming) return;
+    const controller = new AbortController();
+    fetch(`/api/notifications/subscribe?produitId=${id}`, { signal: controller.signal })
+      .then((response) => { if (!response.ok) throw new Error("Notification count unavailable"); return response.json(); })
+      .then((data) => { if (!controller.signal.aborted && Number.isSafeInteger(data.count) && data.count > 0) setWaitingCount(data.count); })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [id, upcoming]);
+
+  const handleAdd = () => {
+    // Relire le panier au clic pour tenir compte d'un ajout depuis un autre composant.
+    const cartQuantity = useStore.getState().carts.filter((item) => item.id === id).reduce((sum, item) => sum + item.quantity, 0);
+    if (upcoming || remainingProductQuantity(product.stock, cartQuantity) < quantity) {
+      toast.error("Cette quantité n’est plus disponible.");
+      return;
     }
-  }, [product, loading, selectedCurrency]);
-
-  // Simuler un produit (remplacez par la vraie logique de récupération)
-
-  const increaseQuantity = () => setQuantity((prev) => prev + 1);
-  const decreaseQuantity = () =>
-    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
-
-  const handleAddToCart = (product: IProduct) => {
-    const newProduct = {
-      ...product,
-      quantity: quantity,
-      id: product._id as string,
-    };
-    addToCart(newProduct);
-
-    // Meta Pixel: Track AddToCart event
-    const finalPrice = product.discount
-      ? product.price - (product.price * product.discount) / 100
-      : product.price;
-    const eventId = trackAddToCart({
-      id: product._id as string,
-      name: product.title,
-      price: finalPrice,
-      quantity: quantity,
-      currency: selectedCurrency,
-    });
-
-    // Send to CAPI for better tracking reliability
+    addToCart({ ...product, id, quantity });
+    const eventId = trackAddToCart({ id, name: product.title, price, quantity, currency });
     sendToCAPI("AddToCart", {
-      content_ids: [product._id as string],
-      content_name: product.title,
-      content_type: "product",
-      value: finalPrice * quantity,
-      currency: selectedCurrency,
-      num_items: quantity,
+      content_ids: [id], content_name: product.title, content_type: "product",
+      value: price * quantity, currency, num_items: quantity,
     }, eventId);
-
-    toast.success("Produit ajouté au panier", {
-      style: {
-        color: "#10b981",
-      },
-      position: "top-right",
-      duration: 3000,
-    });
+    setAddedQuantity(quantity);
+    setAdded(true);
+    if (addedTimer.current) clearTimeout(addedTimer.current);
+    addedTimer.current = setTimeout(() => setAdded(false), 1800);
+    toast.success("Produit ajouté au panier", { duration: 3000, position: "top-right" });
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageRef.current) return;
+  return <main className={styles.page}>
+    <div className={styles.container}>
+      <nav aria-label="Fil d’Ariane" className={styles.breadcrumb}>
+        <ol>
+          <li><Link href="/">Accueil</Link></li>
+          <li><ChevronRight size={12} aria-hidden="true" /><Link href={`/${product.category}`}>{categoryTitle}</Link></li>
+          {product.subCategory && <li><ChevronRight size={12} aria-hidden="true" /><Link href={`/${product.category}/${product.subCategory}`}>{subcategoryTitle}</Link></li>}
+          <li><ChevronRight size={12} aria-hidden="true" /><span aria-current="page">{name}</span></li>
+        </ol>
+      </nav>
 
-    const rect = imageRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+      <div className={styles.hero}>
+        <header className={styles.identity}>
+          <Link href={`/${product.category}`} className={styles.eyebrow}>Maison Yodi-K · {categoryTitle}</Link>
+          <h1>{name}</h1>
+        </header>
 
-    setMagnifierPos({ x, y });
-  };
+        <section className={styles.gallery} aria-label="Photo du produit">
+          <Dialog>
+            <DialogTrigger asChild>
+              <button type="button" className={styles.photo} disabled={imageFailed || !photo} aria-label={`Agrandir la photo de ${name}`}>
+                {!imageFailed && photo ? <Image src={photo} alt={name} fill priority quality={90}
+                  sizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1279px) 50vw, 580px"
+                  className={styles.productImage} onError={() => setImageFailed(true)} />
+                  : <span className={styles.missing}><ImageOff size={30} aria-hidden="true" />Photo indisponible pour le moment</span>}
+                {!imageFailed && photo && <span className={styles.zoomHint}><ZoomIn size={17} aria-hidden="true" />Agrandir</span>}
+              </button>
+            </DialogTrigger>
+            <DialogContent className={styles.lightbox} showCloseButton={false}>
+              <div className={styles.lightboxHeader}>
+                <DialogTitle className={styles.lightboxTitle}>{name}</DialogTitle>
+                <DialogClose asChild><button type="button" aria-label="Fermer la photo" className={styles.close}><X size={22} aria-hidden="true" /></button></DialogClose>
+              </div>
+              <DialogDescription className="sr-only">Photo agrandie du produit. Appuyez sur Échap pour fermer.</DialogDescription>
+              <div className={styles.enlarged}><Image src={photo || "/logo-yodi-k.png"} alt={name} fill unoptimized sizes="90vw" className={styles.productImage} /></div>
+            </DialogContent>
+          </Dialog>
+        </section>
 
-  const handleMouseEnter = () => {
-    setShowMagnifier(true);
-  };
+        <section aria-label="Prix et achat" className={styles.purchase}>
+          <div className={styles.price}>
+            <p>{(product.discount ?? 0) > 0 && <s><span className="sr-only">Prix initial : </span>{formatMoney(product.price, currency, usdRate)}</s>}
+              <strong>{(product.discount ?? 0) > 0 && <span className="sr-only">Prix réduit : </span>}{formatMoney(price, currency, usdRate)}</strong>
+            </p>
+            {(product.discount ?? 0) > 0 && <span className={styles.discount}>−{product.discount}%</span>}
+          </div>
+          {product.description && <p className={styles.excerpt}>{product.description}</p>}
+          <a className={styles.more} href="#product-information">Découvrir ce soin <ChevronDown size={14} aria-hidden="true" /></a>
 
-  const handleMouseLeave = () => {
-    setShowMagnifier(false);
-  };
-
-  if (!product) {
-    return (
-      <div className="min-h-screen bg-white py-8 px-4 font-josefin flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">
-            Produit non trouvé
-          </h1>
-          <p className="text-gray-600">
-            Le produit que vous recherchez n&apos;existe pas.
+          <p className={styles.availability} data-available={!upcoming && product.stock > 0 || undefined}>
+            <span aria-hidden="true" />{upcoming ? "Bientôt disponible" : product.stock > 0 ? "En stock" : "Actuellement en rupture de stock"}
           </p>
-        </div>
-      </div>
-    );
-  }
 
-  return (
-    <>
-      <div className="min-h-screen bg-white py-8 px-4 font-josefin">
-        <div className="max-w-7xl mx-auto px-4">
-          {/* Breadcrumb */}
-          <div className="gap-2 text-xs text-gray-600 mb-6 flex items-end justify-end">
-            <Link href="/">Accueil</Link> /{" "}
-            <Link href={`/${product.category}`}>{product.category}</Link> /{" "}
-            <Link href={`/${product.category}/${product.subCategory}`}>
-              {product.subCategory}
-            </Link>{" "}
-            / {product.title}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            {/* Colonne gauche - Image du produit (40%) */}
-            <div className="lg:col-span-2 relative">
-              {/* Image principale avec effet de loupe amélioré */}
-              <div
-                ref={imageRef}
-                className="relative cursor-zoom-in bg-gray-50 rounded-lg overflow-hidden"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                onMouseMove={handleMouseMove}
-              >
-                <Image
-                  src={product.imageUrl}
-                  quality={90}
-                  alt={product.title}
-                  width={product.imageWidth || 500}
-                  height={product.imageHeight || 600}
-                  priority
-                  sizes="(max-width: 1023px) calc(100vw - 64px), 500px"
-                  className="w-full h-auto object-contain transition-opacity duration-300"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src =
-                      "https://via.placeholder.com/500x600/f0f0f0/666?text=Image+Not+Found";
-                  }}
-                />
-
-                {/* Effet de loupe simple */}
-                {showMagnifier && imageRef.current && (
-                  <div
-                    className="absolute pointer-events-none w-32 h-32 border-2 border-white rounded-full overflow-hidden shadow-lg z-20"
-                    style={{
-                      left: magnifierPos.x - 64,
-                      top: magnifierPos.y - 64,
-                    }}
-                  >
-                    <Image
-                      src={product.imageUrl}
-                      unoptimized
-                      quality={90}
-                      alt={product.title}
-                      width={500}
-                      height={600}
-                      className="w-full h-full object-cover"
-                      style={{
-                        transform: `scale(2.5) translate(${-magnifierPos.x + 64}px, ${-magnifierPos.y + 64}px)`,
-                        transformOrigin: "top left",
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* Icône de recherche */}
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="absolute top-4 left-4 bg-white/80 hover:bg-white p-2 rounded-full transition-colors z-10"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </button>
+          {upcoming ? <div className={styles.notify}>
+            <NotifyButton productId={id} productName={product.title} productImage={photo} variant="detail" />
+            {waitingCount > 0 && <p>{waitingCount} personne{waitingCount > 1 ? "s attendent" : " attend"} ce produit.</p>}
+          </div> : <>
+            {product.stock > 0 && <div className={styles.quantityRow}>
+              <span id="product-quantity-label">Quantité</span>
+              <div className={styles.quantity} role="group" aria-labelledby="product-quantity-label">
+                <button type="button" onClick={() => setRequestedQuantity(Math.max(1, quantity - 1))} disabled={quantity <= 1 || !canAdd} aria-label="Diminuer la quantité"><Minus size={17} aria-hidden="true" /></button>
+                <output aria-live="polite" aria-label="Quantité choisie">{quantity}</output>
+                <button type="button" onClick={() => setRequestedQuantity(quantity + 1)} disabled={!canAdd || quantity >= remaining} aria-label="Augmenter la quantité"><Plus size={17} aria-hidden="true" /></button>
               </div>
-            </div>
-
-            {/* Colonne droite - Détails du produit (60%) */}
-            <div className="lg:col-span-3 space-y-1">
-              {/* Titre du produit */}
-              <h1 className="text-2xl lg:text-3xl font-bold text-black leading-tight">
-                {product.title}
-              </h1>
-
-              {indisponible && (
-                <span className="inline-block mt-2 bg-[#FF9800] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-                  BIENTÔT DISPONIBLE
-                </span>
-              )}
-
-              {/* Prix */}
-              <div className="flex items-center gap-4">
-                {(product.discount ?? 0) > 0 && (
-                  <span className="text-gray-400 line-through text-lg font-medium">
-                    {selectedCurrency === "XOF" ? product.price : Number(product.price / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                  </span>
-                )}
-                <span className="text-[#A36F5E] text-2xl font-bold">
-                  {Math.round(
-                    selectedCurrency === "XOF" ? product.price - (product.price * (product.discount ?? 0)) / 100
-                      : Number(product.price - (product.price * (product.discount ?? 0)) / 100) / Number(usdRate || 1)
-                  ).toFixed(2)}{" "}
-                  {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                </span>
-              </div>
-
-              {/* Avantages/Bénéfices */}
-              {product.benefits && (
-                <div className="space-y-2">
-                  {product.benefits.map((benefit, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <span className="text-gray-700 text-xs">{benefit}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {indisponible ? (
-                /* Produit pas encore disponible : capture d'email */
-                <div className="mt-4 space-y-3">
-                  <NotifyButton
-                    productId={String(product._id)}
-                    productName={product.title}
-                    productImage={product.imageUrl}
-                    variant="detail"
-                  />
-                  {waitingCount > 0 && (
-                    <p className="text-sm text-gray-600">
-                      <strong>{waitingCount}</strong>{" "}
-                      {waitingCount > 1
-                        ? "personnes attendent"
-                        : "personne attend"}{" "}
-                      ce produit.
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <>
-                  {/* Stock */}
-                  {product.stock > 0 && (
-                    <div className="text-[#A36F5E] font-medium text-xs mt-4">
-                      En stock
-                    </div>
-                  )}
-
-                  {/* Sélecteur de quantité */}
-                  <div className="flex md:flex-row flex-col items-start md:items-center gap-4">
-                    <span className="text-gray-700 font-medium">Quantité:</span>
-                    <div className="flex items-center border border-gray-300 rounded-md">
-                      <button
-                        onClick={decreaseQuantity}
-                        className="px-3 py-2 hover:opacity-80 transition-colors"
-                      >
-                        -
-                      </button>
-                      <span className="px-4 py-2 border-x border-gray-300 min-w-[60px] text-center">
-                        {quantity}
-                      </span>
-                      <button
-                        onClick={increaseQuantity}
-                        className="px-3 py-2 hover:opacity-80 transition-colors"
-                      >
-                        +
-                      </button>
-                    </div>
-                    {/* Bouton Ajouter au panier */}
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      className="bg-[#A36F5E] cursor-pointer text-center hover:bg-[#916253] text-white p-3 rounded-md font-semibold text-sm transition-colors"
-                    >
-                      Ajouter au panier
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {/* Informations de la marque */}
-              <div className="text-gray-700 my-4">
-                <span className="font-medium text-xs">Marque: </span>
-                <a href="#" className="text-[#A36F5E] underline text-sm">
-                  {product.brand}
-                </a>
-              </div>
-
-              {/* Information de livraison */}
-              <div className="border inline-flex flex-col items-start gap-2 p-2 my-2">
-                <p className="font-bold text-xs">
-                  LIVRAISON EN MOINS DE 24H À DAKAR
-                </p>
-                <p className="text-xs">sauf les dimanches et jours fériés !!</p>
-              </div>
-
-              {/* SKU et étiquette */}
-              <div className="flex items-center gap-2 text-xs text-gray-600 mt-1">
-                {product.sku && (
-                  <p className="text-[#A36F5E]">SKU : {product.sku}</p>
-                )}
-                {product.etiquette && (
-                  <p className="text-gray-600 text-xs">
-                    Étiquette: {product.etiquette}
-                  </p>
-                )}
-              </div>
-
-              {/* Onglets d'information */}
-              <div className="border-b border-gray-200 mt-12 mb-8">
-                <div className="flex md:flex-row flex-col items-start md:items-center gap-4">
-                  {[
-                    { id: "description", label: "DESCRIPTION:" },
-                    { id: "usage", label: "MODE D'UTILISATION" },
-                    { id: "delivery", label: "LIVRAISON" },
-                    { id: "howToOrder", label: "COMMENT COMMANDER ?" },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`py-2 px-1 text-xs font-semibold transition-colors ${activeTab === tab.id
-                        ? "border-[#A36F5E] border-b-2 text-[#A36F5E] font-medium"
-                        : "border-transparent text-gray-600 hover:text-gray-800"
-                        }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Contenu des onglets */}
-              <div className="min-h-[200px]">
-                {activeTab === "description" && (
-                  <div>
-                    <h3 className="font-semibold text-sm mb-3">
-                      Description :
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed text-sm">
-                      {product.description}
-                    </p>
-                  </div>
-                )}
-
-                {activeTab === "usage" && (
-                  <div>
-                    <h3 className="font-semibold text-sm mb-3">
-                      Mode d&apos;utilisation :
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed text-sm">
-                      {product.usage}
-                    </p>
-                  </div>
-                )}
-
-                {activeTab === "delivery" && (
-                  <div>
-                    <h3 className="font-semibold text-sm mb-3">Livraison :</h3>
-                    <p className="text-gray-700 leading-relaxed text-sm">
-                      Livraison en moins de 24h à Dakar, sauf les dimanches et
-                      jours fériés. Livraison gratuite à partir de 50.000 CFA
-                      d&apos;achat.
-                    </p>
-                  </div>
-                )}
-
-                {activeTab === "howToOrder" && (
-                  <div>
-                    <h3 className="font-semibold text-sm mb-3">
-                      Comment commander ?
-                    </h3>
-                    <div className="text-gray-700 leading-relaxed whitespace-pre-line text-sm">
-                      1. Ajoutez le produit au panier
-                      <br />. Remplissez vos informations de livraison
-                      <br />. Choisissez votre moyen de paiement
-                      <br />. Confirmez votre commande
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal de recherche - Image en plein écran */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="relative max-w-4xl max-h-[90vh]">
-            {/* Bouton fermer */}
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute -top-8 right-0 text-white hover:text-gray-300 text-2xl font-bold z-10"
-            >
-              ✕
+            </div>}
+            <button type="button" className={styles.add} onClick={handleAdd} disabled={!canAdd}>
+              {added ? <Check size={19} aria-hidden="true" /> : <ShoppingBag size={19} aria-hidden="true" />}
+              {added ? "Ajouté au panier" : !canAdd ? product.stock > 0 ? "Quantité disponible déjà au panier" : "Produit épuisé" : "Ajouter au panier"}
             </button>
+            <p className={styles.feedback} role="status" aria-live="polite">{added ? `${addedQuantity} article${addedQuantity > 1 ? "s" : ""} ajouté${addedQuantity > 1 ? "s" : ""} à votre panier.` : inCart > 0 ? `${inCart} article${inCart > 1 ? "s" : ""} déjà dans votre panier.` : ""}</p>
+          </>}
 
-            {/* Image en plein écran */}
-            <Image
-              src={product.imageUrl}
-              unoptimized
-              quality={90}
-              alt={product.title}
-              width={800}
-              height={600}
-              className="w-full h-auto object-contain max-h-[90vh]"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src =
-                  "https://via.placeholder.com/800x600/f0f0f0/666?text=Topicrem+Mela";
-              }}
-            />
-          </div>
+          <div className={styles.delivery}><Truck size={20} aria-hidden="true" /><div><strong>Livraison</strong><p>Les frais sont indiqués au moment de la commande.</p></div></div>
+          {(product.brand || product.sku || product.etiquette) && <dl className={styles.references}>
+            {product.brand && <div><dt>Marque</dt><dd>{product.brand}</dd></div>}
+            {product.sku && <div><dt>Référence</dt><dd>{product.sku}</dd></div>}
+            {product.etiquette && <div><dt>Étiquette</dt><dd>{product.etiquette}</dd></div>}
+          </dl>}
+          <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener noreferrer" className={styles.advice}><MessageCircle size={17} aria-hidden="true" />Besoin d’un conseil ? <ArrowUpRight size={15} aria-hidden="true" /></a>
+        </section>
+      </div>
+
+      <section id="product-information" aria-labelledby="product-information-title" className={styles.information}>
+        <div><p className={styles.eyebrow}>Le soin, en détail</p><h2 id="product-information-title">À propos de<br className={styles.desktopBreak} /> ce soin</h2></div>
+        <div className={styles.accordions}>
+          {product.description && <details open><summary>Description <ChevronDown size={18} aria-hidden="true" /></summary><div className={styles.content}><p>{product.description}</p></div></details>}
+          {!!product.benefits?.length && <details><summary>Les bénéfices <ChevronDown size={18} aria-hidden="true" /></summary><div className={styles.content}><ul>{product.benefits.map((benefit, index) => <li key={index}>{benefit}</li>)}</ul></div></details>}
+          {product.usage && <details><summary>Conseils d’utilisation <ChevronDown size={18} aria-hidden="true" /></summary><div className={styles.content}><p>{product.usage}</p></div></details>}
+          <details><summary>Livraison <ChevronDown size={18} aria-hidden="true" /></summary><div className={styles.content}><p>Les frais de livraison sont indiqués avant la confirmation de votre commande. Pour toute question, notre équipe est joignable au <a href={`tel:${PHONE_COMMERCIAL.tel}`}>{PHONE_COMMERCIAL.label}</a>.</p></div></details>
+          <details><summary>Comment commander <ChevronDown size={18} aria-hidden="true" /></summary><div className={styles.content}><ol><li>Choisissez la quantité et ajoutez le produit au panier.</li><li>Renseignez vos informations de livraison.</li><li>Choisissez un moyen de paiement proposé.</li><li>Vérifiez le récapitulatif puis confirmez votre commande.</li></ol><Link href="/panier">Voir mon panier <ArrowUpRight size={14} aria-hidden="true" /></Link></div></details>
         </div>
-      )}
-    </>
-  );
-};
-
-export default ProductDetailPage;
+      </section>
+      <Link href={`/${product.category}`} className={styles.back}><ArrowLeft size={16} aria-hidden="true" />Retour à l’univers {categoryTitle}</Link>
+    </div>
+  </main>;
+}
