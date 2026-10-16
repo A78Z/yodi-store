@@ -78,3 +78,5 @@
 
 .ordersLink { display:inline-flex; align-items:center; gap:8px; min-height:44px; color:#80513f; font-size:12px; flex-shrink:0; }
 .ordersLink:hover { text-decoration:underline; text-underline-offset:4px; }
+
+.stats dd { order:-1; }
