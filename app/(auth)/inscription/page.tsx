@@ -22,6 +22,7 @@ export default function InscriptionPage() {
   const [pendingEmail, setPendingEmail] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [code, setCode] = useState("");
+  const codeRef = useRef<HTMLInputElement>(null);
   const [verificationError, setVerificationError] = useState("");
   const verificationErrorRef = useRef<HTMLDivElement>(null);
   const [verificationStatus, setVerificationStatus] = useState("");
@@ -150,13 +151,13 @@ export default function InscriptionPage() {
     </div>
   </div>
     <Dialog open={dialogOpen} onOpenChange={(open) => { if (!request.current) setDialogOpen(open); }}>
-      <DialogContent className={styles.verification} showCloseButton={false} onCloseAutoFocus={(event) => { event.preventDefault(); if (!verified) reopenRef.current?.focus(); }} onEscapeKeyDown={(event) => { if (request.current) event.preventDefault(); }}>
+      <DialogContent className={styles.verification} showCloseButton={false} onOpenAutoFocus={(event) => { event.preventDefault(); codeRef.current?.focus(); }} onCloseAutoFocus={(event) => { event.preventDefault(); if (!verified) reopenRef.current?.focus(); }} onEscapeKeyDown={(event) => { if (request.current) event.preventDefault(); }}>
         <DialogClose asChild><button type="button" className={styles.close} disabled={!!busy} aria-label="Fermer la vérification"><X size={20} aria-hidden="true" /></button></DialogClose>
         <p className={styles.eyebrow}>Une dernière étape</p><DialogTitle className={styles.dialogTitle}>Vérifiez votre compte.</DialogTitle>
         <DialogDescription className={styles.dialogDescription}>Saisissez le code à 6 chiffres envoyé à <strong>{pendingEmail}</strong>.</DialogDescription>
         <form onSubmit={handleVerification} aria-label="Vérification de votre compte" aria-busy={!!busy}>
           {verificationError && <div ref={verificationErrorRef} role="alert" tabIndex={-1} className={styles.error}><p>{verificationError}</p></div>}
-          <div className={styles.field}><label htmlFor="verification-code">Code de vérification</label><input id="verification-code" name="code" className={styles.code} inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" required value={code} onChange={(event) => setCode(sanitizeVerificationCode(event.target.value))} disabled={!!busy} aria-describedby="code-help" /><p id="code-help" className={styles.help}>Entrez les 6 chiffres du code reçu par email.</p></div>
+          <div className={styles.field}><label htmlFor="verification-code">Code de vérification</label><input ref={codeRef} id="verification-code" name="code" className={styles.code} inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" required value={code} onChange={(event) => setCode(sanitizeVerificationCode(event.target.value))} disabled={!!busy} aria-describedby="code-help" /><p id="code-help" className={styles.help}>Entrez les 6 chiffres du code reçu par email.</p></div>
           <p className={styles.verificationStatus} role="status">{verificationStatus}</p>
           <button type="submit" className={styles.primary} disabled={!!busy || !isVerificationCode(code)}>{busy === "verify" ? <><LoaderCircle size={18} className={styles.spinner} aria-hidden="true" />Vérification en cours…</> : <>Vérifier mon compte<ArrowRight size={17} aria-hidden="true" /></>}</button>
           <button type="button" className={styles.resend} onClick={handleResend} disabled={!!busy}>{busy === "resend" ? "Envoi en cours…" : "Renvoyer le code"}</button>
