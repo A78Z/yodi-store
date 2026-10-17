@@ -72,7 +72,7 @@ export default function HomeMediaGallery({ media, label = "Photos et vidéos de 
     <MediaRow media={available.slice(0, middle)} paused={paused || hovered || focused || Boolean(selected)} allowAnimation={available.length >= 10} onError={onError} onOpen={open} />
     {available.length > 1 && <MediaRow media={available.slice(middle)} reverse paused={paused || hovered || focused || Boolean(selected)} allowAnimation={available.length >= 10} onError={onError} onOpen={open} />}
     <Dialog open={Boolean(selected)} onOpenChange={value => { if (!value) setSelected(null); }}>
-      <DialogContent className={styles.viewer} showCloseButton={false} aria-describedby={undefined} onCloseAutoFocus={event => { event.preventDefault(); trigger.current?.focus(); }}>
+      <DialogContent className={styles.viewer} style={{ top: 0, right: 0, bottom: 0, left: 0, margin: "auto", height: "fit-content", translate: "none", transform: "none", animation: "none" }} showCloseButton={false} aria-describedby={undefined} onCloseAutoFocus={event => { event.preventDefault(); trigger.current?.focus(); }}>
         <DialogTitle className="sr-only">{selected?.label || "Média Yodi-K"}</DialogTitle>
         <DialogClose className={styles.close} aria-label="Fermer le média"><X size={22}/></DialogClose>
         {selected && (selected.kind === "video" ? <video key={selected.id} src={selected.viewerUrl} poster={selected.thumbnail} controls playsInline preload="none" aria-label={selected.label} onError={() => setPlayError(true)}/> :
