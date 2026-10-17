@@ -69,3 +69,13 @@ Validation locale : ESLint ciblé et diff check réussis ; TypeScript conserve l
 - Rendu ordinateur et Firefox adaptatif 375 × 844 contrôlés visuellement. La galerie reste contenue dans la page ; les rangées sont consultables horizontalement. Six photos ne déclenchent pas de boucle automatique.
 - Clic sur la carte Chantily Glow Skin : fiche produit correspondante chargée dans le même onglet, titre et URL vérifiés.
 - 49/49 tests Node réussis. Aucun média vidéo n’a été ajouté ; la publication depuis l’admin attend toujours l’accès à son dépôt et à son stockage.
+
+## Gestion manuelle depuis le dépôt admin
+
+Le dépôt `A78Z/yodiadmin` a été fourni pour ajouter la page de publication. La boutique est préparée pour lire la collection isolée `yodi_gallery_preview_refonte` dans la base existante, en lecture seule, uniquement en Preview refonte. La variable serveur `GALLERY_BLOB_HOST` doit être identique au stockage public connecté à l’admin. Aucun jeton Blob d’écriture n’est requis dans la boutique.
+
+Le flux publié remplace les photos catalogue uniquement s’il contient des médias valides. Les vignettes et fichiers doivent appartenir au stockage explicitement configuré et au préfixe `gallery/refonte/`. Seuls les médias marqués publiés sont transmis aux visiteurs, au maximum 24 ; cache 60 secondes.
+
+Les nouveaux médias ouvrent une fenêtre accessible avec fermeture, retour du focus et pause des rangées. Les vidéos utilisent un lecteur natif, `preload=none`, contrôles et aucune lecture/son automatiques ; le lecteur est démonté à la fermeture. Les photos s’ouvrent en grand sans recadrage. Les cartes catalogue de repli conservent leurs liens produits.
+
+Validation : 52 tests Node réussis, ESLint ciblé sans erreur ; erreurs TypeScript existantes inchangées. L’activation et le test complet avec un vrai fichier attendent le stockage Vercel Blob de la Preview admin et l’adresse du compte autorisé. Aucun envoi/publication n’est déclaré validé à ce stade.
