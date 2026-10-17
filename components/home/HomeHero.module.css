@@ -1,0 +1,51 @@
+.section { padding:24px 24px 0; color:#302820; font-family:var(--font-dm-sans),sans-serif; }
+.carousel { max-width:1200px; margin:auto; border:1px solid #e8ded5; border-radius:24px; overflow:hidden; background:#efe6dd; }
+.section :is(a,button):focus-visible { outline:2px solid #80513f; outline-offset:5px; }
+.panels { display:grid; touch-action:pan-y pinch-zoom; }
+.slide { grid-area:1/1; display:grid; grid-template-columns:1fr 1fr; opacity:0; visibility:hidden; pointer-events:none; transition:opacity 650ms ease,visibility 650ms; min-width:0; }
+.active { opacity:1; visibility:visible; pointer-events:auto; z-index:1; }
+.sand { background:#efe6dd; --accent:#80513f; --button:#80513f; }
+.rose { background:#f0dfd3; --accent:#80513f; --button:#80513f; }
+.olive { background:#e9e9df; --accent:#4f6142; --button:#4f6142; }
+.content { display:flex; flex-direction:column; align-items:flex-start; justify-content:center; padding:58px 54px 42px; min-height:540px; min-width:0; }
+.eyebrow { display:flex; align-items:center; gap:9px; text-transform:uppercase; letter-spacing:.16em; font-size:10px; font-weight:500; line-height:1.8; color:var(--accent); margin:0 0 27px; }
+.eyebrow > span { display:block; width:24px; height:1px; background:currentColor; flex-shrink:0; }
+.content h2 { font:400 clamp(38px,4.6vw,62px)/1.08 var(--font-fraunces-serif),serif; letter-spacing:-.035em; margin:0; max-width:500px; }
+.content h2 em { display:block; font-weight:400; color:var(--accent); margin-top:3px; }
+.description { font-size:14px; line-height:1.85; color:#68594e; max-width:370px; margin:24px 0 28px; }
+.cta { display:inline-flex; align-items:center; justify-content:center; gap:20px; background:var(--button); color:white; padding:15px 25px; min-height:52px; border-radius:30px; font-size:13px; font-weight:500; transition:background 180ms,box-shadow 180ms; }
+.cta:hover { background:#654030; box-shadow:0 4px 14px #30282014; }
+.cta svg { transition:transform 180ms; } .cta:hover svg { transform:translateX(3px); }
+.signature { display:flex; align-items:center; gap:10px; color:#68594e; font-size:10px; margin-top:36px; letter-spacing:.02em; }
+.signature > span { width:5px; height:5px; background:var(--accent); border-radius:50%; }
+.visual { position:relative; min-width:0; overflow:hidden; background:#dfcbb9; }
+.photo { object-fit:cover; transform:scale(1.045); transition:transform 1400ms cubic-bezier(.2,.6,.3,1); }
+.active .photo { transform:scale(1); }
+.photoShade { position:absolute; inset:0; background:linear-gradient(180deg,#30282020,transparent 30%,transparent 65%,#30282075); pointer-events:none; }
+.photoLabel { position:absolute; left:28px; bottom:28px; color:white; font-size:10px; letter-spacing:.15em; text-transform:uppercase; line-height:1.8; }
+.photoNumber { position:absolute; right:24px; bottom:14px; color:#fff9; font:400 80px/1 var(--font-fraunces-serif),serif; letter-spacing:-.06em; }
+.active .content > :is(.eyebrow,h2,.description,.cta) { animation:reveal 650ms both cubic-bezier(.2,.7,.3,1); }
+.active .content h2 { animation-delay:70ms; } .active .description { animation-delay:140ms; } .active .cta { animation-delay:210ms; }
+.controls { display:flex; justify-content:space-between; align-items:center; gap:32px; padding:16px 28px; background:#faf7f2; border-top:1px solid #e8ded5; }
+.selectors { display:flex; gap:24px; width:55%; max-width:540px; }
+.selector { min-height:44px; flex:1; min-width:0; cursor:pointer; color:#68594e; text-align:left; padding:5px 0; }
+.selectorText { display:flex; align-items:center; gap:10px; font-size:11px; white-space:nowrap; }
+.selectorText > span { font-size:10px; color:#68594e; }
+.selected { color:#80513f; font-weight:500; }
+.track { display:block; height:2px; background:#e0d5cb; margin-top:12px; overflow:hidden; }
+.track > span { display:block; width:100%; height:100%; background:#80513f; transform-origin:left; }
+.progress { animation:progress 8000ms linear both; }
+.filled { transform:scaleX(1); }
+.navigation { display:flex; align-items:center; gap:8px; }
+.count { display:flex; align-items:center; gap:8px; font-size:12px; font-variant-numeric:tabular-nums; padding-right:16px; }
+.count > span { font-size:10px; color:#68594e; }
+.iconButton { width:44px; height:44px; border:1px solid #d2c2b5; border-radius:50%; background:transparent; color:#80513f; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.iconButton:hover { background:#efe6dd; }
+.playButton { border-color:transparent; }
+.srOnly { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+@keyframes reveal { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+@keyframes progress { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+@media(max-width:1100px) { .content { padding:40px 36px; min-height:500px; } .content h2 { font-size:clamp(38px,4.6vw,54px); } .selectors { width:59%; gap:18px; } .controls { gap:20px; padding:16px 24px; } .count { display:none; } }
+@media(max-width:760px) { .section { padding:16px 16px 0; } .carousel { border-radius:18px; } .slide { grid-template-columns:minmax(0,1fr); grid-template-rows:280px 1fr; } .visual { grid-row:1; } .content { grid-row:2; min-height:355px; padding:28px 24px; } .content h2 { font-size:clamp(34px,7.5vw,52px); max-width:none; } .eyebrow { margin-bottom:16px; font-size:9px; } .description { margin:18px 0 22px; font-size:13px; max-width:460px; } .signature { display:none; } .photoLabel { bottom:20px; left:24px; font-size:9px; } .photoNumber { font-size:64px; bottom:10px; } .controls { padding:12px 20px; gap:14px; flex-wrap:wrap; } .selectors { width:auto; flex:1; gap:16px; max-width:none; } .selectorText { font-size:10px; gap:7px; } .navigation { width:100%; justify-content:flex-end; gap:10px; border-top:1px solid #e8ded5; padding-top:10px; } .count { display:flex; margin-right:auto; } .track { margin-top:10px; } }
+@media(max-width:390px) { .content { padding:26px 20px; min-height:355px; } .slide { grid-template-rows:240px 1fr; } .content h2 { font-size:34px; } .controls { padding:10px 16px; } .selectors { gap:12px; } .selectorText { gap:5px; font-size:9px; } .selectorText > span { font-size:9px; } .photoLabel { left:20px; max-width:180px; } .photoNumber { font-size:58px; } }
+@media(prefers-reduced-motion:reduce) { .section *, .section *::before, .section *::after { animation:none !important; transition:none !important; } .photo { transform:none; } }

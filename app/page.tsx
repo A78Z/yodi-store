@@ -23,7 +23,7 @@ export default async function Home() {
 
   return (
     <main className="bg-ivoire">
-      <HomeHero />
+      <HomeHero univers={univers.map(({ slug }) => ({ slug }))} />
       <HomeUnivers univers={univers} />
       <HomeProducts products={products} />
       <HomeFooter univers={univers} />
