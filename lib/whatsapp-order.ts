@@ -58,3 +58,46 @@ export function whatsappOrderHref(order: {
   ].join("\n");
   return `https://wa.me/${order.phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
 }
+
+export type WhatsAppCartLine = {
+  name: string;
+  quantity: number;
+  maxQuantity: number;
+  displayedPrice: string;
+  displayedLineTotal: string;
+  publicProductUrl: string;
+};
+
+export function validateWhatsAppCartOrder(fields: WhatsAppOrderFields, lines: ReadonlyArray<WhatsAppCartLine>): WhatsAppOrderErrors {
+  const errors = validateWhatsAppOrder({ ...fields, quantity: 1 }, 1);
+  if (lines.length === 0) errors.quantity = "Le panier est vide.";
+  for (const line of lines) {
+    if (!Number.isSafeInteger(line.quantity) || line.quantity < 1 || line.quantity > line.maxQuantity) {
+      errors.quantity = line.maxQuantity < 1 ? `${line.name} n’est pas disponible à la commande pour le moment.` : `${line.name} : choisis une quantité entre 1 et ${line.maxQuantity}.`;
+      break;
+    }
+  }
+  return errors;
+}
+
+export function whatsappCartOrderHref(order: {
+  lines: ReadonlyArray<WhatsAppCartLine>; displayedSubtotal: string; phone: string; fields: WhatsAppOrderFields;
+}): string {
+  if (Object.keys(validateWhatsAppCartOrder(order.fields, order.lines)).length) throw new Error("Coordonnées ou panier invalides");
+  const { fields } = order;
+  const message = [
+    "Bonjour Yodi-K, je souhaite faire une demande de commande pour mon panier.",
+    ...order.lines.flatMap((line, index) => [
+      "", `${index + 1}. ${line.name}`,
+      `Quantité : ${line.quantity}`, `Prix unitaire : ${line.displayedPrice}`,
+      `Total produit : ${line.displayedLineTotal}`, `Lien : ${line.publicProductUrl}`,
+    ]),
+    "", `Sous-total produits : ${order.displayedSubtotal}`,
+    "Frais de livraison à confirmer.",
+    `Téléphone : ${normalizeOrderPhone(fields.phone, fields.phoneCountry)}`,
+    `Adresse : ${fields.street.trim()}, ${fields.city.trim()}, ${fields.deliveryCountry.trim()}`,
+    ...(fields.customerName.trim() ? [`Nom : ${fields.customerName.trim()}`] : []),
+    ...(fields.note.trim() ? [`Note : ${fields.note.trim()}`] : []),
+  ].join("\n");
+  return `https://wa.me/${order.phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+}

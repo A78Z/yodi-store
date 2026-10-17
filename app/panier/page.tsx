@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, ChevronRight, Minus, Plus, ShoppingBag, Trash2, 
 import useStore from "@/lib/store-manage";
 import { cartTotals, discountedPrice, formatMoney, productHref } from "@/lib/pricing";
 import { formatProductName } from "@/lib/format";
+import WhatsAppOrderButton from "@/components/WhatsAppOrderButton";
 import styles from "./page.module.css";
 
 function subscribeHydration(onChange: () => void) {
@@ -101,6 +102,7 @@ export default function CartPage() {
                 <div className={styles.subtotal}><dt>Sous-total<span>Hors livraison</span></dt><dd aria-live="polite">{money(totals.subtotal)}</dd></div>
               </dl>
               <Link href="/checkout" className={styles.primary}>Passer à la commande<ArrowRight size={17} aria-hidden="true" /></Link>
+              <WhatsAppOrderButton cartItems={carts} />
               <p className={styles.note}>Les frais de livraison seront ajoutés avant la validation de votre commande.</p>
             </aside>
           </div>

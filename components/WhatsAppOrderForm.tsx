@@ -6,35 +6,50 @@ import { ChevronDown, MapPin, MessageCircle, Minus, Package, Phone, Plus, User, 
 import { FaWhatsapp } from "react-icons/fa";
 import { DialogClose, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import useStore from "@/lib/store-manage";
-import { discountedPrice, formatMoney, productHref } from "@/lib/pricing";
+import { cartTotals, discountedPrice, formatMoney, productHref } from "@/lib/pricing";
+import { formatProductName } from "@/lib/format";
 import { remainingProductQuantity } from "@/lib/product-quantity";
 import { PHONE_COMMERCIAL, SITE_URL } from "@/lib/site";
-import { normalizeOrderPhone, validateWhatsAppOrder, whatsappOrderHref, type PhoneCountry, type WhatsAppOrderErrors, type WhatsAppOrderFields } from "@/lib/whatsapp-order";
-import type { WhatsAppOrderProduct } from "./WhatsAppOrderButton";
+import { normalizeOrderPhone, validateWhatsAppOrder, validateWhatsAppCartOrder, whatsappOrderHref, whatsappCartOrderHref, type PhoneCountry, type WhatsAppOrderErrors, type WhatsAppOrderFields } from "@/lib/whatsapp-order";
+import type { WhatsAppOrderButtonProps } from "./WhatsAppOrderButton";
 import styles from "./WhatsAppOrderForm.module.css";
 
-export default function WhatsAppOrderForm({ product, name, displayedPrice, initialQuantity }: {
-  product: WhatsAppOrderProduct; name: string; displayedPrice: string; initialQuantity: number;
-}) {
+export default function WhatsAppOrderForm(props: WhatsAppOrderButtonProps) {
+  const cartMode = "cartItems" in props;
+  const cartItems = cartMode ? props.cartItems : null;
+  const product = cartMode ? null : props.product;
   const id = useId();
   const currency = useStore(state => state.selectedCurrency);
   const usdRate = useStore(state => state.usdRate);
-  const inCart = useStore(state => state.carts.filter(item => item.id === String(product._id)).reduce((sum, item) => sum + item.quantity, 0));
-  const maxQuantity = product.disponible === false ? 0 : remainingProductQuantity(product.stock, inCart);
+  const inCart = useStore(state => state.carts.filter(item => item.id === String(product?._id)).reduce((sum, item) => sum + item.quantity, 0));
+  const maxQuantity = !product || product.disponible === false ? 0 : remainingProductQuantity(product.stock, inCart);
   const [fields, setFields] = useState<WhatsAppOrderFields>({
     phoneCountry: "SN", phone: "", street: "", city: "", deliveryCountry: "Sénégal", customerName: "", note: "",
-    quantity: Math.max(1, Math.min(Math.floor(initialQuantity) || 1, Math.max(1, maxQuantity))),
+    quantity: Math.max(1, Math.min(Math.floor(cartMode ? 1 : props.initialQuantity ?? 1) || 1, Math.max(1, maxQuantity))),
   });
   const [step, setStep] = useState<1 | 2>(1);
   const [errors, setErrors] = useState<WhatsAppOrderErrors>({});
-  const [imageFailed, setImageFailed] = useState(false);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+  const [cartQuantities, setCartQuantities] = useState<Record<string, number>>(() => Object.fromEntries((cartItems ?? []).map(item => [item.id, item.quantity])));
   const [optionalOpen, setOptionalOpen] = useState(false);
   const phoneRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const subtotal = formatMoney(discountedPrice(product.price, product.discount) * fields.quantity, currency, usdRate);
-  const photo = product.imageUrl && product.imageUrl !== "/logo-yodi-k.png" ? product.imageUrl : "";
+  const lines = cartItems ? cartItems.map(item => ({
+    id: item.id, product: { ...item, _id: item.id }, name: formatProductName(item.title),
+    displayedPrice: formatMoney(discountedPrice(item.price, item.discount), currency, usdRate),
+    quantity: cartQuantities[item.id] ?? item.quantity,
+    // These units already belong to this cart; do not subtract the cart a second time.
+    maxQuantity: item.disponible === false ? 0 : remainingProductQuantity(item.stock, 0),
+  })) : product && !cartMode ? [{ id: String(product._id), product, name: props.name, displayedPrice: props.displayedPrice, quantity: fields.quantity, maxQuantity }] : [];
+  const subtotal = formatMoney(cartTotals(lines.map(line => ({ ...line.product, quantity: line.quantity }))).subtotal, currency, usdRate);
+  const unavailable = lines.length === 0 || lines.some(line => line.maxQuantity < 1);
+  const messageLines = lines.map(line => ({ name: line.name, displayedPrice: line.displayedPrice,
+    displayedLineTotal: formatMoney(discountedPrice(line.product.price, line.product.discount) * line.quantity, currency, usdRate),
+    quantity: line.quantity, maxQuantity: line.maxQuantity,
+    publicProductUrl: new URL(productHref(line.product), SITE_URL).href,
+  }));
 
   useEffect(() => {
     bodyRef.current?.scrollTo(0, 0);
@@ -46,7 +61,7 @@ export default function WhatsAppOrderForm({ product, name, displayedPrice, initi
     setFields(previous => ({ ...previous, [key]: value }));
   }
   function validate() {
-    const nextErrors = validateWhatsAppOrder(fields, maxQuantity);
+    const nextErrors = cartMode ? validateWhatsAppCartOrder(fields, messageLines) : validateWhatsAppOrder(fields, maxQuantity);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
       if (step !== 1) setStep(1);
@@ -62,9 +77,9 @@ export default function WhatsAppOrderForm({ product, name, displayedPrice, initi
   }
   function openWhatsApp() {
     if (!validate()) return;
-    const href = whatsappOrderHref({ name, displayedPrice, displayedSubtotal: subtotal,
-      publicProductUrl: new URL(productHref(product), SITE_URL).href,
-      phone: PHONE_COMMERCIAL.tel, fields, maxQuantity });
+    const href = cartMode ? whatsappCartOrderHref({ lines: messageLines, displayedSubtotal: subtotal, phone: PHONE_COMMERCIAL.tel, fields })
+      : whatsappOrderHref({ name: messageLines[0].name, displayedPrice: messageLines[0].displayedPrice, displayedSubtotal: subtotal,
+        publicProductUrl: messageLines[0].publicProductUrl, phone: PHONE_COMMERCIAL.tel, fields, maxQuantity });
     window.open(href, "_blank", "noopener,noreferrer");
   }
   const error = (field: keyof WhatsAppOrderErrors) => errors[field] ? <p id={`${id}-${field}-error`} className={styles.error} role="alert">{errors[field]}</p> : null;
@@ -79,16 +94,30 @@ export default function WhatsAppOrderForm({ product, name, displayedPrice, initi
     </header>
 
     <div className={styles.body} ref={bodyRef}>
-      <div className={styles.product}>
-        <div className={styles.photo}>{photo && !imageFailed ? <Image src={photo} alt={name} fill sizes="72px" onError={() => setImageFailed(true)} /> : <Package size={26} aria-label="Photo indisponible" />}</div>
-        <div className={styles.productText}><h3>{name}</h3><p>{displayedPrice} × {fields.quantity}</p></div>
-        {step === 1 ? <div className={styles.quantity} role="group" aria-label="Quantité du produit" tabIndex={-1} {...invalid("quantity")}>
-          <button type="button" aria-label="Diminuer la quantité de la demande" disabled={fields.quantity <= 1} onClick={() => update("quantity", fields.quantity - 1)}><Minus size={17} aria-hidden="true" /></button>
-          <output aria-live="polite" aria-label="Quantité de la demande">{fields.quantity}</output>
-          <button type="button" aria-label="Augmenter la quantité de la demande" disabled={fields.quantity >= maxQuantity} onClick={() => update("quantity", fields.quantity + 1)}><Plus size={17} aria-hidden="true" /></button>
-        </div> : <p className={styles.summaryQuantity}>Quantité : {fields.quantity}</p>}
+      {cartMode && <p className={styles.selectionLabel}>{lines.length} référence{lines.length > 1 ? "s" : ""} · {lines.reduce((sum, line) => sum + line.quantity, 0)} article{lines.reduce((sum, line) => sum + line.quantity, 0) > 1 ? "s" : ""}</p>}
+      <div className={styles.productList}>
+        {lines.map(line => {
+          const photo = line.product.imageUrl && line.product.imageUrl !== "/logo-yodi-k.png" ? line.product.imageUrl : "";
+          const changeQuantity = (quantity: number) => cartMode ? setCartQuantities(previous => ({ ...previous, [line.id]: quantity })) : update("quantity", quantity);
+          const quantityLabel = cartMode ? ` de ${line.name}` : " de la demande";
+          return <div key={line.id}>
+            <div className={styles.product}>
+              <div className={styles.photo}>{photo && !failedImages[line.id] ? <Image src={photo} alt={line.name} fill sizes="72px" onError={() => setFailedImages(previous => ({ ...previous, [line.id]: true }))} /> : <Package size={26} aria-label="Photo indisponible" />}</div>
+              <div className={styles.productText}><h3>{line.name}</h3><p>{line.displayedPrice} × {line.quantity}</p>
+                {cartMode && <p className={styles.linePrice}>Total : {formatMoney(discountedPrice(line.product.price, line.product.discount) * line.quantity, currency, usdRate)}</p>}
+              </div>
+              {step === 1 ? <div className={styles.quantity} role="group" aria-label={cartMode ? `Quantité de ${line.name}` : "Quantité du produit"} tabIndex={-1} {...invalid("quantity")}>
+                <button type="button" aria-label={`Diminuer la quantité${quantityLabel}`} disabled={line.quantity <= 1} onClick={() => changeQuantity(line.quantity - 1)}><Minus size={17} aria-hidden="true" /></button>
+                <output aria-live="polite" aria-label={`Quantité${quantityLabel}`}>{line.quantity}</output>
+                <button type="button" aria-label={`Augmenter la quantité${quantityLabel}`} disabled={line.quantity >= line.maxQuantity} onClick={() => changeQuantity(line.quantity + 1)}><Plus size={17} aria-hidden="true" /></button>
+              </div> : <p className={styles.summaryQuantity}>Quantité : {line.quantity}</p>}
+            </div>
+            {line.maxQuantity < 1 && <p className={styles.error} role="alert">{line.name} n’est pas disponible à la commande pour le moment.</p>}
+          </div>;
+        })}
       </div>
-      {maxQuantity < 1 && <p className={styles.error} role="alert">Ce produit n’est pas disponible à la commande pour le moment.</p>}
+      {lines.length === 0 && <p className={styles.error} role="alert">Le panier est vide.</p>}
+      {cartMode && step === 1 && <p className={styles.help}>Les ajustements de quantité restent propres à cette demande WhatsApp.</p>}
       {error("quantity")}
 
       {step === 1 ? <>
@@ -125,7 +154,7 @@ export default function WhatsAppOrderForm({ product, name, displayedPrice, initi
         </div>
       </> : <>
         <dl className={styles.recap}>
-          <div><dt>Prix unitaire</dt><dd>{displayedPrice}</dd></div>
+          {!cartMode && <div><dt>Prix unitaire</dt><dd>{lines[0]?.displayedPrice}</dd></div>}
           <div><dt>Sous-total produits</dt><dd>{subtotal}</dd></div>
           <div><dt>Téléphone</dt><dd>{normalizeOrderPhone(fields.phone, fields.phoneCountry)}</dd></div>
           <div><dt>Adresse de livraison</dt><dd>{fields.street.trim()}<br />{fields.city.trim()}, {fields.deliveryCountry.trim()}</dd></div>
@@ -139,9 +168,9 @@ export default function WhatsAppOrderForm({ product, name, displayedPrice, initi
     <footer className={styles.footer}>
       <div className={styles.total}><span>Sous-total produits</span><strong aria-live="polite">{subtotal}</strong></div>
       <p className={styles.fees}>Frais de livraison à confirmer</p>
-      {step === 1 ? <button type="submit" className={styles.primary} disabled={maxQuantity < 1}>Continuer</button> : <div className={styles.finalActions}>
+      {step === 1 ? <button type="submit" className={styles.primary} disabled={unavailable}>Continuer</button> : <div className={styles.finalActions}>
         <button type="button" className={styles.modify} onClick={() => setStep(1)}>Modifier</button>
-        <button type="button" className={styles.primary} disabled={maxQuantity < 1} onClick={openWhatsApp}><FaWhatsapp size={20} aria-hidden="true" />Envoyer la demande sur WhatsApp</button>
+        <button type="button" className={styles.primary} disabled={unavailable} onClick={openWhatsApp}><FaWhatsapp size={20} aria-hidden="true" />Envoyer la demande sur WhatsApp</button>
       </div>}
     </footer>
   </form>;

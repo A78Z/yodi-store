@@ -112,3 +112,8 @@
   .fees { margin-bottom: 6px; }
   .primary { min-height: 44px; }
 }
+
+.productList { display: grid; gap: 16px; margin-bottom: 24px; }
+.productList .product { margin-bottom: 0; }
+.selectionLabel { margin: 0 0 14px; font-size: 13px; font-weight: 500; color: #68594e; }
+.productText .linePrice { margin-top: 7px; color: #80513f; font-weight: 500; }

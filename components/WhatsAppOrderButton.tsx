@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import type { CART } from "@/lib/types/types";
 import type { IProduct } from "@/lib/models/product";
 import { FaWhatsapp } from "react-icons/fa";
 import { Content as DialogContent } from "@radix-ui/react-dialog";
@@ -11,12 +12,17 @@ import formStyles from "./WhatsAppOrderForm.module.css";
 
 export type WhatsAppOrderProduct = Pick<IProduct, "price" | "discount" | "stock" | "disponible" | "imageUrl" | "category" | "subCategory"> & { _id: unknown };
 
-export default function WhatsAppOrderButton({ product, name, displayedPrice, initialQuantity = 1 }: {
+export type WhatsAppOrderButtonProps = {
   product: WhatsAppOrderProduct;
   name: string;
   displayedPrice: string;
   initialQuantity?: number;
-}) {
+} | {
+  cartItems: Array<CART & { disponible?: boolean }>;
+};
+
+export default function WhatsAppOrderButton(props: WhatsAppOrderButtonProps) {
+  const cartMode = "cartItems" in props;
   const [open, setOpen] = useState(false);
   const [viewport, setViewport] = useState<{ height: number; top: number } | null>(null);
   useEffect(() => {
@@ -31,7 +37,7 @@ export default function WhatsAppOrderButton({ product, name, displayedPrice, ini
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className={styles.button} aria-label={`Commander sur WhatsApp : ${name}`}>
+        <button type="button" className={styles.button} aria-label={cartMode ? "Commander tout le panier sur WhatsApp" : `Commander sur WhatsApp : ${props.name}`}>
           <FaWhatsapp size={19} aria-hidden="true" />
           <span>Commander sur WhatsApp</span>
         </button>
@@ -39,7 +45,7 @@ export default function WhatsAppOrderButton({ product, name, displayedPrice, ini
       <DialogPortal>
       <DialogOverlay className={formStyles.overlay} />
       <DialogContent style={viewport ? { "--order-viewport-height": `${viewport.height}px`, "--order-viewport-top": `${viewport.top}px` } as CSSProperties : undefined} className={formStyles.modal} onOpenAutoFocus={(event) => event.preventDefault()}>
-        {open && <WhatsAppOrderForm product={product} name={name} displayedPrice={displayedPrice} initialQuantity={initialQuantity} />}
+        {open && <WhatsAppOrderForm {...props} />}
       </DialogContent>
       </DialogPortal>
     </Dialog>
