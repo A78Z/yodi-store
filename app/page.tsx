@@ -22,11 +22,13 @@ export default async function Home() {
   ]);
 
   return (
-    <main className="bg-ivoire">
-      <HomeHero univers={univers.map(({ slug }) => ({ slug }))} />
-      <HomeUnivers univers={univers} />
-      <HomeProducts products={products} />
+    <>
+      <main className="bg-ivoire">
+        <HomeHero univers={univers.map(({ slug }) => ({ slug }))} />
+        <HomeUnivers univers={univers} />
+        <HomeProducts products={products} />
+      </main>
       <HomeFooter univers={univers} />
-    </main>
+    </>
   );
 }
