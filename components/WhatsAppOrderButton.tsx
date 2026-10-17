@@ -3,7 +3,8 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import type { IProduct } from "@/lib/models/product";
 import { FaWhatsapp } from "react-icons/fa";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Content as DialogContent } from "@radix-ui/react-dialog";
+import { Dialog, DialogOverlay, DialogPortal, DialogTrigger } from "@/components/ui/dialog";
 import WhatsAppOrderForm from "./WhatsAppOrderForm";
 import styles from "./WhatsAppOrderButton.module.css";
 import formStyles from "./WhatsAppOrderForm.module.css";
@@ -35,9 +36,12 @@ export default function WhatsAppOrderButton({ product, name, displayedPrice, ini
           <span>Commander sur WhatsApp</span>
         </button>
       </DialogTrigger>
-      <DialogContent style={viewport ? { "--order-viewport-height": `${viewport.height}px`, "--order-viewport-top": `${viewport.top}px` } as CSSProperties : undefined} className={formStyles.modal} showCloseButton={false} onOpenAutoFocus={(event) => event.preventDefault()}>
+      <DialogPortal>
+      <DialogOverlay />
+      <DialogContent style={viewport ? { "--order-viewport-height": `${viewport.height}px`, "--order-viewport-top": `${viewport.top}px` } as CSSProperties : undefined} className={formStyles.modal} onOpenAutoFocus={(event) => event.preventDefault()}>
         {open && <WhatsAppOrderForm product={product} name={name} displayedPrice={displayedPrice} initialQuantity={initialQuantity} />}
       </DialogContent>
+      </DialogPortal>
     </Dialog>
   );
 }
