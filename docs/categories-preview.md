@@ -22,6 +22,26 @@ Les liens ont un contour de focus visible, les icônes décoratives sont masqué
 
 ## Vérification en Preview
 
-À compléter après déploiement et contrôles.
+Preview : https://yodi-store-2p7nqi97c-a78zs-projects.vercel.app/categories
+
+Commit fonctionnel `d1b9b94`, déploiement Vercel `9em13u5TRSpKKvuR3uvb5ivsKAjp`. GitHub confirme `success`, environnement `Preview`, `production_environment: false`.
+
+Contrôles du 17 octobre 2026 :
+
+- La page affiche trois univers réels : Huile (3 produits), Baume (2), Bain & Corps (1). Les photos sont celles des produits rattachés, sans nouvelle image créée ou ajoutée. Les compteurs sont ceux de la réponse existante du catalogue.
+- Rendu inspecté à 1280, 375 et 320 px. Trois cartes sur ordinateur, une colonne sur mobile ; titres, photos carrées, compteurs et liens lisibles. Le bloc d’aide et ses deux commandes ont également été inspectés aux petites largeurs, sans débordement.
+- Depuis le titre de la grille : Tab atteint Huile, puis Baume, Bain & Corps et Rechercher un soin. Le contour brun de focus de Huile est confirmé visuellement. Chaque carte crée un seul arrêt de tabulation.
+- Entrée sur Bain & Corps : ouverture de `/bain-corps`, titre de l’univers confirmé. Les deux autres URL de cartes, `/huile` et `/baume`, sont lues dans l’arbre d’accessibilité et conservent les routes existantes.
+- Entrée sur Rechercher un soin : ouverture de `/recherche`, titre « Un soin en tête ? » confirmé. Retour à `/categories` réussi. Le lien WhatsApp et son nom accessible sont vérifiés sans l’ouvrir et sans message envoyé.
+- Les états d’absence de catégories, d’échec serveur et d’absence d’image fournie sont relus dans le code, sans provoquer d’incident ni modifier les données. Les règles de réduction des animations sont relues sans changement de préférence système. Contrôle mobile en émulation Firefox, sans téléphone physique.
+- Aucun ajout au panier, compte, commande, paiement, notification ou email pendant ces essais. La vue adaptative Firefox est refermée, avec ses dimensions habituelles restaurées (375 × 844).
+
+## Captures
+
+Captures de la Preview réelle, viewport étendu pour montrer la page. Seul l’en-tête partagé et la marge blanche finale sont recadrés. Aucune interface du navigateur ni donnée personnelle ; le bouton noir flottant appartient à Vercel.
+
+- `screenshots/categories-desktop.png`
+- `screenshots/categories-mobile-375.png`
+- `screenshots/categories-mobile-320.png`
 
 Fichiers fonctionnels : `app/categories/page.tsx`, `app/categories/page.module.css`.
