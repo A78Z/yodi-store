@@ -76,7 +76,7 @@
 .modal :is(button, input, textarea, select):focus-visible { outline: 2px solid #80513f; outline-offset: 3px; }
 .title:focus { outline: none; }
 @media (max-width: 600px) {
-  .modal { width: 100%; max-width: 100%; height: var(--order-viewport-height, 100dvh); max-height: var(--order-viewport-height, 100dvh); top: var(--order-viewport-top, 0px); translate: none; transform: translateX(-50%); border: 0; border-radius: 0; }
+  .modal { width: 100%; max-width: 100%; height: var(--order-viewport-height, 100dvh); max-height: var(--order-viewport-height, 100dvh); top: var(--order-viewport-top, 0px); left: 0; right: 0; translate: none; transform: none; animation: none; border: 0; border-radius: 0; }
   .form { height: 100%; }
   .header { padding: 24px 20px 20px; }
   .title { font-size: 29px; }
