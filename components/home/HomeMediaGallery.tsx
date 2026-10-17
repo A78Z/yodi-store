@@ -17,9 +17,9 @@ function MediaCard({ media, copy, onError, onOpen }: { media: HomeGalleryMedia; 
     <img src={media.thumbnail} alt="" loading="lazy" decoding="async" width={260} height={325} referrerPolicy="no-referrer" onError={() => onError(media.id)} />
     {media.kind === "video" && <span className={styles.video} aria-hidden="true"><Play size={18} fill="currentColor" />{!media.viewerUrl && <ArrowUpRight size={12}/>}</span>}
   </>;
-  const common = { className: styles.card, "aria-label": copy ? undefined : label, tabIndex: copy ? -1 : 0 };
+  const common = { className: styles.card, "aria-label": copy ? undefined : label, tabIndex: copy ? -1 : 0, "data-media-id": copy ? undefined : media.id };
   return media.viewerUrl
-    ? <button type="button" {...common} onClick={event => onOpen(media, event.currentTarget)}>{content}</button>
+    ? <button type="button" {...common} onMouseDown={copy ? event => event.preventDefault() : undefined} onClick={event => onOpen(media, event.currentTarget)}>{content}</button>
     : <a {...common} href={media.permalink} target={media.internal ? undefined : "_blank"} rel={media.internal ? undefined : "noopener noreferrer"} onMouseDown={copy ? event => event.preventDefault() : undefined}>{content}</a>;
 }
 
@@ -63,7 +63,7 @@ export default function HomeMediaGallery({ media, label = "Photos et vidéos de 
   if (!available.length) return null;
   const middle = Math.ceil(available.length / 2);
   const onError = (id: string) => setFailed(current => current.has(id) ? current : new Set([...current, id]));
-  const open = (item: HomeGalleryMedia, element: HTMLElement) => { trigger.current = element; setPlayError(false); setSelected(item); };
+  const open = (item: HomeGalleryMedia, element: HTMLElement) => { trigger.current = element.closest(`.${styles.row}`)?.querySelector<HTMLElement>(`[data-media-id="${CSS.escape(item.id)}"]`) || element; setPlayError(false); setSelected(item); };
   return <section className={styles.gallery} aria-label={label}
     onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
     onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}>
