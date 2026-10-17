@@ -27,6 +27,24 @@ Preview déployée : https://yodi-store-41nm0gzc0-a78zs-projects.vercel.app/rech
 
 Commit fonctionnel `4ff4e80`, déploiement Vercel `F8iVGVQ4QYUiSBSptZbiD36iAPB1`. GitHub confirme la réussite, l’environnement `Preview` et `production_environment: false`.
 
-Les contrôles visuels et les parcours réels restent à terminer : Firefox est utilisé en parallèle, ses changements d’onglet ont interrompu la sélection de la Preview, puis une interaction a expiré. Aucune capture ni recherche dans la nouvelle Preview n’est encore validée. La disponibilité de l’onglet a été demandée à l’utilisateur ; les vérifications statiques et le déploiement sont terminés.
+Contrôles complémentaires réalisés dans Firefox le 17 octobre 2026 :
+
+- Recherche `huile` : trois produits réels, Huile Locks à 8 000 FCFA, Huile Volume Cheveux à 7 600 FCFA (ancien prix 8 000), Huile de Barbe à 6 791 FCFA (ancien prix 7 989). Les cartes, prix et commandes sont lisibles à 1280, 375 et 320 px ; captures inspectées. Les noms longs reviennent à la ligne, sans débordement de la grille.
+- Formulaire de page : saisie de `zzaucunsoin2026`, Tab vers Rechercher puis Entrée. URL actualisée, zéro produit et panneau avec conseils/suggestions affichés. Le bouton de recherche est atteint au clavier ; le contour de focus est prévu dans les règles CSS.
+- Nouvelle saisie `HUILE` puis Entrée : mêmes trois résultats. Le moteur existant conserve son comportement insensible à la casse.
+- Depuis les résultats, ouverture de Huile Locks : URL complète `/huile/huile-cheveux/6939bdf396e4c874c38c2e65` et titre de la fiche confirmés. Aucun ajout au panier pendant ces contrôles ; le composant réutilise le comportement déjà vérifié lors de la refonte de Nos produits.
+- Effacement du champ puis soumission : route `/recherche`, titre « Un soin en tête ? » et invitation à chercher, sans faux compteur de résultats.
+- Aucun email, notification, paiement ou formulaire de compte soumis. Aucune donnée métier modifiée. La vue adaptative de Firefox est refermée après restauration de ses dimensions habituelles (375 × 844).
+
+L’erreur réseau, le bouton de relance, une pagination de plus de 24 résultats, un produit sans stock ou bientôt disponible et une image en erreur n’ont pas été forcés en Preview ; leurs branches sont relues dans le code. Les tests existants couvrent les calculs de prix et quantités. Les règles de réduction des animations sont relues sans changer la préférence système. Aucun essai sur téléphone physique ni changement de devise pendant cette étape.
+
+## Captures
+
+Captures de la Preview réelle, viewport étendu pour présenter les résultats. Sur ordinateur, seul le haut de l’image est recadré pour retirer l’en-tête partagé. Aucune interface du navigateur ni donnée personnelle ; le bouton flottant noir appartient à Vercel.
+
+- `screenshots/search-desktop.png` — trois résultats de HUILE à 1280 px.
+- `screenshots/search-mobile-375.png` — trois résultats de huile.
+- `screenshots/search-mobile-320.png` — grille à 320 px.
+- `screenshots/search-no-results.png` — recherche sans correspondance.
 
 Fichiers fonctionnels : `app/recherche/page.tsx`, `app/recherche/page.module.css`, `components/home/HomeProductTile.tsx`, `lib/category-label.ts`, `lib/catalog.ts`.
