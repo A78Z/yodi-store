@@ -87,3 +87,9 @@ L’utilisateur a autorisé la création du stockage public dédié `yodi-galler
 Côté admin, le jeton Blob et le compte de publication autorisé ont été configurés comme secrets serveur sur la seule branche Preview `refonte`. Les fichiers restent publics une fois envoyés au stockage. Aucun média n’a été envoyé ni publié pendant la configuration. Une nouvelle Preview est déclenchée pour charger les variables. Le test réel d’envoi/publication attend une session administrateur et un média choisi par l’utilisateur.
 
 Les deux Previews configurées ont été redéployées avec succès (`8407081` pour l’admin et `7bae440` pour la boutique). Le compte autorisé a pu ouvrir le formulaire admin après rechargement complet, avec sélection de fichier active et galerie vide. L’interface a été contrôlée sur ordinateur et à 375 × 844. Aucun fichier n’a été envoyé pour ce contrôle ; le premier envoi et sa lecture attendent un média choisi par l’utilisateur.
+
+### 17 octobre — visuels fournis et rangées complètes
+
+Les onze photos jointes par Yodi-K remplacent les anciennes photos du catalogue dans la galerie Preview. Copies JPEG optimisées (2,3 Mo au total), sans recadrage, dans `public/gallery/refonte`. Les publications admin sont prioritaires, puis les visuels fournis complètent douze cartes : six par rangée. En l’absence de publication admin, le premier visuel est repris une fois pour remplir la douzième carte. Les deux boucles continues fonctionnent en sens opposés sur ordinateur et mobile ; pause accessible, pause au focus/survol et préférence de réduction des animations conservées. Six cartes visibles sur les écrans larges, défilement de cartes lisibles sur mobile.
+
+Contrôle initial de l’admin connecté : « Vos médias (0) », aucune publication retrouvée malgré la photo signalée. Aucun document ni média admin modifié. Deux tests vérifient les rangées complètes et la priorité des publications.
