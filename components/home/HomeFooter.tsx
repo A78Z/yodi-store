@@ -4,6 +4,8 @@ import { FaFacebook, FaInstagram, FaTiktok, FaSnapchat, FaWhatsapp } from "react
 import { ArrowUpRight, CreditCard, Mail, MessageCircle, Phone } from "lucide-react";
 import type { UniversAffiche } from "@/lib/catalog";
 import { CONTACT_EMAIL, PHONE_CA, PHONE_COMMERCIAL, PHONE_SN, WHATSAPP } from "@/lib/site";
+import FacebookGallery from "@/components/home/FacebookGallery";
+import type { FacebookGalleryMedia } from "@/lib/facebook-gallery";
 import Flag from "@/components/home/Flag";
 import styles from "./HomeFooter.module.css";
 
@@ -14,7 +16,7 @@ const SOCIALS = [
   { href: "https://www.snapchat.com/add/yyodi-store", label: "Snapchat", Icon: FaSnapchat },
 ];
 
-const HomeFooter = ({ univers }: { univers: UniversAffiche[] }) => (
+const HomeFooter = ({ univers, facebookMedia = [] }: { univers: UniversAffiche[]; facebookMedia?: FacebookGalleryMedia[] }) => (
   <footer id="pied-de-page" className={styles.footer} aria-label="Maison Yodi-K">
     <div className={styles.adviceWrap}>
       <div className={styles.advice}>
@@ -31,6 +33,8 @@ const HomeFooter = ({ univers }: { univers: UniversAffiche[] }) => (
         </a>
       </div>
     </div>
+
+    <FacebookGallery media={facebookMedia} />
 
     <div className={styles.body}>
       <div className={styles.container}>

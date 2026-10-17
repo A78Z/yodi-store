@@ -4,13 +4,14 @@ import HomeProducts from "@/components/home/HomeProducts";
 import HomeFooter from "@/components/home/HomeFooter";
 import { getCarouselProducts } from "@/lib/product-data";
 import { getVisibleUnivers } from "@/lib/catalog";
+import { getFacebookGallery } from "@/lib/facebook-gallery-data";
 
 export const dynamic = "force-dynamic";
 
 // Accueil — refonte direction A « Terre & Karité ».
 // N'affiche que ce qui existe : univers non vides, produits réels.
 export default async function Home() {
-  const [products, univers] = await Promise.all([
+  const [products, univers, facebookMedia] = await Promise.all([
     getCarouselProducts().catch((error) => {
       console.error("Error fetching home products:", error);
       return [];
@@ -19,6 +20,7 @@ export default async function Home() {
       console.error("Error fetching visible univers:", error);
       return [];
     }),
+    getFacebookGallery(),
   ]);
 
   return (
@@ -28,7 +30,7 @@ export default async function Home() {
         <HomeUnivers univers={univers} />
         <HomeProducts products={products} />
       </main>
-      <HomeFooter univers={univers} />
+      <HomeFooter univers={univers} facebookMedia={facebookMedia} />
     </>
   );
 }
