@@ -25,7 +25,7 @@
 }
 
 button.card { padding:0; text-align:inherit; cursor:pointer; }
-.viewer[data-slot="dialog-content"] { position:fixed; inset:50% auto auto 50%; translate:none; animation:none; transform:translate(-50%,-50%); z-index:100; width:min(92vw,960px); max-width:960px; max-height:90dvh; display:flex; align-items:center; justify-content:center; padding:48px 16px 16px; background:#faf7f2; border-radius:20px; overflow:auto; }
+.viewer[data-slot="dialog-content"] { position:fixed; inset:0; margin:auto; height:fit-content; translate:none !important; animation:none !important; transform:none !important; z-index:100; width:min(92vw,960px); max-width:960px; max-height:90dvh; display:flex; align-items:center; justify-content:center; padding:48px 16px 16px; background:#faf7f2; border-radius:20px; overflow:auto; }
 .viewer img,.viewer video { display:block; max-width:100%; max-height:calc(90dvh - 70px); object-fit:contain; }
 .close { position:absolute; top:12px; right:12px; width:32px; height:32px; display:grid; place-items:center; color:#80513f; border-radius:50%; background:#efe5d9; cursor:pointer; }
 .close:focus-visible { outline:2px solid #80513f; outline-offset:2px; }
