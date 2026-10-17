@@ -79,3 +79,9 @@ Le flux publié remplace les photos catalogue uniquement s’il contient des mé
 Les nouveaux médias ouvrent une fenêtre accessible avec fermeture, retour du focus et pause des rangées. Les vidéos utilisent un lecteur natif, `preload=none`, contrôles et aucune lecture/son automatiques ; le lecteur est démonté à la fermeture. Les photos s’ouvrent en grand sans recadrage. Les cartes catalogue de repli conservent leurs liens produits.
 
 Validation : 52 tests Node réussis, ESLint ciblé sans erreur ; erreurs TypeScript existantes inchangées. L’activation et le test complet avec un vrai fichier attendent le stockage Vercel Blob de la Preview admin et l’adresse du compte autorisé. Aucun envoi/publication n’est déclaré validé à ce stade.
+
+## Stockage manuel configuré — 17 octobre 2026
+
+L’utilisateur a autorisé la création du stockage public dédié `yodi-gallery-refonte`. Son domaine public est `uqatabojauagou1s.public.blob.vercel-storage.com` ; `GALLERY_BLOB_HOST` a été enregistré côté boutique avec portée exclusive `refonte`, vérifiée dans Vercel. Aucun jeton d’écriture Blob n’est transmis à la boutique ni versionné.
+
+Côté admin, le jeton Blob et le compte de publication autorisé ont été configurés comme secrets serveur sur la seule branche Preview `refonte`. Les fichiers restent publics une fois envoyés au stockage. Aucun média n’a été envoyé ni publié pendant la configuration. Une nouvelle Preview est déclenchée pour charger les variables. Le test réel d’envoi/publication attend une session administrateur et un média choisi par l’utilisateur.
