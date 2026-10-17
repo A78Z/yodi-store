@@ -44,6 +44,8 @@ Les captures sont prises dans la Preview réelle, sans interface du navigateur n
 - `screenshots/home-products-mobile-375.png`
 - `screenshots/home-products-mobile-320.png`
 
-Le changement manuel de devise et la navigation clavier complète ne sont pas exécutés : Firefox est utilisé en parallèle et a interrompu les dernières interactions. Les fonctions de conversion et de construction d’URL sont identiques aux versions déjà validées ; elles restent couvertes par les tests existants. Les liens de fiches et les noms accessibles ont été lus dans l’arbre d’accessibilité, sans ouvrir de fiche pendant cette étape.
+Contrôles complémentaires en Preview finale : le sélecteur USD actualise les six cartes avec deux décimales (Chantily Glow Skin : 10.98 USD, prix initial 11.56 USD ; Baume Volume Capillaire : 14.23 USD). Retour à XOF vérifié, dont 6 175 FCFA et 6 500 FCFA pour Chantily. La devise FCFA est rétablie à la fin du contrôle.
+
+Depuis le titre de section, trois pressions successives sur Tab atteignent « Tous nos univers », le lien de la première fiche, puis son bouton « Ajouter Chantily Glow Skin au panier ». Le contour de focus du bouton est confirmé visuellement. Ce contrôle couvre le début du parcours clavier de la section ; les liens et noms accessibles des six cartes sont également lus dans l’arbre d’accessibilité, sans ouvrir de fiche pendant cette étape. La vue adaptative de Firefox est refermée après vérification.
 
 Fichiers fonctionnels : `components/home/HomeProducts.tsx`, `components/home/HomeProducts.module.css`, `components/home/HomeProductTile.tsx`, `components/home/HomeProductTile.module.css`.
