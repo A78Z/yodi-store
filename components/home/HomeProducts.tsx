@@ -1,22 +1,32 @@
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import type { IProduct } from "@/lib/models/product";
+import { categoryLabel } from "@/lib/catalog";
 import HomeProductCard from "@/components/home/HomeProductCard";
+import styles from "./HomeProducts.module.css";
 
-const HomeProducts = ({ products }: { products: IProduct[] }) => {
+export default function HomeProducts({ products }: { products: IProduct[] }) {
   if (products.length === 0) return null;
+
   return (
-    <section id="produits" aria-labelledby="produits-titre" className="mx-auto max-w-6xl scroll-mt-6 px-4 pt-12 md:px-8 md:pt-20">
-      <h2 id="produits-titre" className="font-fraunces text-2xl text-cacao md:text-4xl">
-        Nos produits
-      </h2>
-      <ul className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 md:mt-10 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
-        {products.map((product, index) => (
-          <li key={String(product._id)}>
-            <HomeProductCard product={product} priority={index < 2} />
-          </li>
-        ))}
-      </ul>
+    <section id="produits" aria-labelledby="produits-titre" className={styles.section}>
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div>
+            <p className={styles.eyebrow}><span aria-hidden="true" />Les soins de la maison</p>
+            <h2 id="produits-titre">Nos <em>produits</em></h2>
+            <p className={styles.intro}>Des soins à découvrir, des gestes à adopter. Composez votre rituel à votre rythme.</p>
+          </div>
+          <Link href="/categories" className={styles.allLink}>Tous nos univers<ArrowRight size={16} aria-hidden="true" /></Link>
+        </header>
+        <ul className={styles.grid}>
+          {products.map(product => (
+            <li key={String(product._id)}>
+              <HomeProductCard product={product} categoryTitle={categoryLabel(product.category)} />
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
-};
-
-export default HomeProducts;
+}
