@@ -9,8 +9,8 @@ import useStore from "@/lib/store-manage";
 import { cartTotals, discountedPrice, formatMoney, productHref } from "@/lib/pricing";
 import { formatProductName } from "@/lib/format";
 import { remainingProductQuantity } from "@/lib/product-quantity";
-import { PHONE_COMMERCIAL, SITE_URL } from "@/lib/site";
-import { normalizeOrderPhone, validateWhatsAppOrder, validateWhatsAppCartOrder, whatsappOrderHref, whatsappCartOrderHref, type PhoneCountry, type WhatsAppOrderErrors, type WhatsAppOrderFields } from "@/lib/whatsapp-order";
+import { SITE_URL } from "@/lib/site";
+import { normalizeOrderPhone, validWhatsAppProductLink, validateWhatsAppOrder, validateWhatsAppCartOrder, whatsappOrderHref, whatsappCartOrderHref, type PhoneCountry, type WhatsAppOrderErrors, type WhatsAppOrderFields } from "@/lib/whatsapp-order";
 import type { WhatsAppOrderButtonProps } from "./WhatsAppOrderButton";
 import styles from "./WhatsAppOrderForm.module.css";
 
@@ -62,6 +62,10 @@ export default function WhatsAppOrderForm(props: WhatsAppOrderButtonProps) {
   }
   function validate() {
     const nextErrors = cartMode ? validateWhatsAppCartOrder(fields, messageLines) : validateWhatsAppOrder(fields, maxQuantity);
+    if (messageLines.some(line => !validWhatsAppProductLink(line.name, line.publicProductUrl))
+      || lines.some(line => !Number.isFinite(discountedPrice(line.product.price, line.product.discount)) || discountedPrice(line.product.price, line.product.discount) < 0)) {
+      nextErrors.quantity = "Les informations d’un produit sont invalides. Actualise la page avant de réessayer.";
+    }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
       if (step !== 1) setStep(1);
@@ -77,10 +81,10 @@ export default function WhatsAppOrderForm(props: WhatsAppOrderButtonProps) {
   }
   function openWhatsApp() {
     if (!validate()) return;
-    const href = cartMode ? whatsappCartOrderHref({ lines: messageLines, displayedSubtotal: subtotal, phone: PHONE_COMMERCIAL.tel, fields })
+    const href = cartMode ? whatsappCartOrderHref({ lines: messageLines, displayedSubtotal: subtotal, fields })
       : whatsappOrderHref({ name: messageLines[0].name, displayedPrice: messageLines[0].displayedPrice, displayedSubtotal: subtotal,
-        publicProductUrl: messageLines[0].publicProductUrl, phone: PHONE_COMMERCIAL.tel, fields, maxQuantity });
-    window.open(href, "_blank", "noopener,noreferrer");
+        publicProductUrl: messageLines[0].publicProductUrl, fields, maxQuantity });
+    window.location.assign(href);
   }
   const error = (field: keyof WhatsAppOrderErrors) => errors[field] ? <p id={`${id}-${field}-error`} className={styles.error} role="alert">{errors[field]}</p> : null;
   const invalid = (field: keyof WhatsAppOrderErrors) => ({ "aria-invalid": errors[field] ? true : undefined, "aria-describedby": errors[field] ? `${id}-${field}-error` : undefined });

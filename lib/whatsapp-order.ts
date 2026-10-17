@@ -36,27 +36,49 @@ export function validateWhatsAppOrder(fields: WhatsAppOrderFields, maxQuantity: 
   return errors;
 }
 
+export function validWhatsAppProductLink(name: string, publicProductUrl: string): boolean {
+  if (!name.trim()) return false;
+  try {
+    const url = new URL(publicProductUrl);
+    const parts = url.pathname.split("/").filter(Boolean);
+    return url.origin === "https://yodi-k.com" && !url.username && !url.password && !url.search && !url.hash
+      && parts.length === 3 && !["undefined", "null"].includes(parts[2]);
+  } catch { return false; }
+}
+
+function contactMessageLines(fields: WhatsAppOrderFields): string[] {
+  return [
+    "",
+    ...(fields.customerName.trim() ? [`Nom : ${fields.customerName.trim()}`] : []),
+    `Téléphone du client : ${normalizeOrderPhone(fields.phone, fields.phoneCountry)}`,
+    `Adresse de livraison : ${fields.street.trim()}, ${fields.city.trim()}, ${fields.deliveryCountry.trim()}`,
+    ...(fields.note.trim() ? [`Note : ${fields.note.trim()}`] : []),
+    "", "Merci de me confirmer la disponibilité et le montant total avec livraison.",
+  ];
+}
+
+// The recipient is always the merchant, never a customer-supplied phone number.
+function finalWhatsAppHref(messageLines: string[]): string {
+  return `https://wa.me/221780128486?text=${encodeURIComponent(messageLines.join("\n"))}`;
+}
+
 // Called only by the final action. No customer data is placed in the site's URL or storage.
 export function whatsappOrderHref(order: {
   name: string; displayedPrice: string; displayedSubtotal: string; publicProductUrl: string;
-  phone: string; fields: WhatsAppOrderFields; maxQuantity: number;
+  fields: WhatsAppOrderFields; maxQuantity: number;
 }): string {
   if (Object.keys(validateWhatsAppOrder(order.fields, order.maxQuantity)).length) throw new Error("Coordonnées ou quantité invalides");
-  const { fields } = order;
-  const message = [
-    "Bonjour Yodi-K, je souhaite faire une demande de commande.",
+  if (!validWhatsAppProductLink(order.name, order.publicProductUrl)) throw new Error("Produit invalide");
+  return finalWhatsAppHref([
+    "Bonjour Yodi-K, je souhaite passer une commande.", "",
     `Produit : ${order.name}`,
-    `Quantité : ${fields.quantity}`,
+    `Quantité : ${order.fields.quantity}`,
     `Prix unitaire : ${order.displayedPrice}`,
     `Sous-total produits : ${order.displayedSubtotal}`,
-    "Frais de livraison à confirmer.",
-    `Téléphone : ${normalizeOrderPhone(fields.phone, fields.phoneCountry)}`,
-    `Adresse : ${fields.street.trim()}, ${fields.city.trim()}, ${fields.deliveryCountry.trim()}`,
-    ...(fields.customerName.trim() ? [`Nom : ${fields.customerName.trim()}`] : []),
-    ...(fields.note.trim() ? [`Note : ${fields.note.trim()}`] : []),
-    `Lien : ${order.publicProductUrl}`,
-  ].join("\n");
-  return `https://wa.me/${order.phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+    "Livraison : frais à confirmer",
+    `Lien du produit : ${order.publicProductUrl}`,
+    ...contactMessageLines(order.fields),
+  ]);
 }
 
 export type WhatsAppCartLine = {
@@ -81,23 +103,19 @@ export function validateWhatsAppCartOrder(fields: WhatsAppOrderFields, lines: Re
 }
 
 export function whatsappCartOrderHref(order: {
-  lines: ReadonlyArray<WhatsAppCartLine>; displayedSubtotal: string; phone: string; fields: WhatsAppOrderFields;
+  lines: ReadonlyArray<WhatsAppCartLine>; displayedSubtotal: string; fields: WhatsAppOrderFields;
 }): string {
   if (Object.keys(validateWhatsAppCartOrder(order.fields, order.lines)).length) throw new Error("Coordonnées ou panier invalides");
-  const { fields } = order;
-  const message = [
-    "Bonjour Yodi-K, je souhaite faire une demande de commande pour mon panier.",
+  if (order.lines.some(line => !validWhatsAppProductLink(line.name, line.publicProductUrl))) throw new Error("Produit invalide");
+  return finalWhatsAppHref([
+    "Bonjour Yodi-K, je souhaite passer une commande.",
     ...order.lines.flatMap((line, index) => [
-      "", `${index + 1}. ${line.name}`,
+      "", `Produit ${index + 1} : ${line.name}`,
       `Quantité : ${line.quantity}`, `Prix unitaire : ${line.displayedPrice}`,
-      `Total produit : ${line.displayedLineTotal}`, `Lien : ${line.publicProductUrl}`,
+      `Total produit : ${line.displayedLineTotal}`, `Lien du produit : ${line.publicProductUrl}`,
     ]),
     "", `Sous-total produits : ${order.displayedSubtotal}`,
-    "Frais de livraison à confirmer.",
-    `Téléphone : ${normalizeOrderPhone(fields.phone, fields.phoneCountry)}`,
-    `Adresse : ${fields.street.trim()}, ${fields.city.trim()}, ${fields.deliveryCountry.trim()}`,
-    ...(fields.customerName.trim() ? [`Nom : ${fields.customerName.trim()}`] : []),
-    ...(fields.note.trim() ? [`Note : ${fields.note.trim()}`] : []),
-  ].join("\n");
-  return `https://wa.me/${order.phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+    "Livraison : frais à confirmer",
+    ...contactMessageLines(order.fields),
+  ]);
 }

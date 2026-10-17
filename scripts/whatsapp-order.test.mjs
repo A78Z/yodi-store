@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeOrderPhone, validateWhatsAppOrder, whatsappOrderHref } from '../lib/whatsapp-order.ts';
 import { discountedPrice, formatMoney, productHref } from '../lib/pricing.ts';
-import { PHONE_COMMERCIAL, SITE_URL } from '../lib/site.ts';
+import { SITE_URL } from '../lib/site.ts';
 
 const product = { _id: '6939bdf396e4c874c38c2e65', category: 'huile', subCategory: 'cheveux' };
 const publicUrl = new URL(productHref(product), SITE_URL).href;
 const fields = { phoneCountry: 'SN', phone: '77 000 00 00', street: 'Rue de démonstration', city: 'Dakar', deliveryCountry: 'Sénégal', customerName: '', note: '', quantity: 2 };
-const order = { name: 'Huile de Cheveux', displayedPrice: formatMoney(discountedPrice(7989, 15), 'XOF', 625), displayedSubtotal: formatMoney(discountedPrice(7989, 15) * 2, 'XOF', 625), publicProductUrl: publicUrl, phone: PHONE_COMMERCIAL.tel, fields, maxQuantity: 3 };
+const order = { name: 'Huile de Cheveux', displayedPrice: formatMoney(discountedPrice(7989, 15), 'XOF', 625), displayedSubtotal: formatMoney(discountedPrice(7989, 15) * 2, 'XOF', 625), publicProductUrl: publicUrl, fields, maxQuantity: 3 };
 
 test('Senegal accepts nine digits with or without country prefix and rejects incomplete or malformed input', () => {
   for (const value of ['77 000 00 00', '+221 77 000 00 00', '00221 77 000 00 00', '221770000000']) assert.equal(normalizeOrderPhone(value, 'SN'), '+221770000000');
@@ -38,10 +38,11 @@ test('final message includes commercial number, normalized contact, address, qua
   assert.ok(text.includes('Quantité : 2'));
   assert.ok(text.includes(`Prix unitaire : ${order.displayedPrice}`));
   assert.ok(text.includes(`Sous-total produits : ${order.displayedSubtotal}`));
-  assert.ok(text.includes('Téléphone : +221770000000'));
-  assert.ok(text.includes('Adresse : Rue de démonstration, Dakar, Sénégal'));
-  assert.ok(text.endsWith(`Lien : ${publicUrl}`));
-  assert.ok(text.includes('Frais de livraison à confirmer.'));
+  assert.ok(text.includes('Téléphone du client : +221770000000'));
+  assert.ok(text.includes('Adresse de livraison : Rue de démonstration, Dakar, Sénégal'));
+  assert.ok(text.includes(`Lien du produit : ${publicUrl}`));
+  assert.ok(text.endsWith("Merci de me confirmer la disponibilité et le montant total avec livraison."));
+  assert.ok(text.includes('Livraison : frais à confirmer'));
   assert.ok(!text.includes('Nom :'));
   assert.ok(!text.includes('Note :'));
 });
@@ -62,7 +63,7 @@ test('final message preserves accents, multiline notes and special characters wi
   const message = new URL(href).searchParams.get('text');
   assert.equal(href, `https://wa.me/221780128486?text=${encodeURIComponent(message)}`);
   assert.equal(new URL(href).hash, '');
-  assert.ok(message.includes('Téléphone : +18195550123'));
+  assert.ok(message.includes('Téléphone du client : +18195550123'));
   assert.ok(message.includes('Nom : Démonstration'));
   assert.ok(message.includes('Note : Repère & entrée #2\nAprès 18h'));
 });
@@ -75,4 +76,23 @@ test('no final link can be generated with invalid coordinates or unavailable qua
 test('products without subcategory retain the existing canonical product route', () => {
   assert.equal(new URL(productHref({ ...product, subCategory: undefined }), SITE_URL).href,
     'https://yodi-k.com/huile/product/6939bdf396e4c874c38c2e65');
+});
+
+test('final message exactly matches the requested multiline template and never uses the client as recipient', () => {
+  const href = whatsappOrderHref({ ...order, fields: { ...fields, customerName: 'Démonstration', note: 'Un repère & entrée #2' } });
+  assert.equal(new URL(href).searchParams.get('text'), [
+    'Bonjour Yodi-K, je souhaite passer une commande.', '',
+    `Produit : ${order.name}`, 'Quantité : 2', `Prix unitaire : ${order.displayedPrice}`,
+    `Sous-total produits : ${order.displayedSubtotal}`, 'Livraison : frais à confirmer', `Lien du produit : ${publicUrl}`, '',
+    'Nom : Démonstration', 'Téléphone du client : +221770000000', 'Adresse de livraison : Rue de démonstration, Dakar, Sénégal',
+    'Note : Un repère & entrée #2', '', 'Merci de me confirmer la disponibilité et le montant total avec livraison.',
+  ].join('\n'));
+  assert.equal(new URL(href).pathname, '/221780128486');
+});
+
+test('invalid products and noncanonical public links cannot open WhatsApp', () => {
+  for (const publicProductUrl of ['http://yodi-k.com/huile/product/id', 'https://preview.vercel.app/huile/product/id', 'https://localhost/huile/product/id', 'https://yodi-k.com/huile/product/undefined', 'invalid']) {
+    assert.throws(() => whatsappOrderHref({ ...order, publicProductUrl }));
+  }
+  assert.throws(() => whatsappOrderHref({ ...order, name: '' }));
 });

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateWhatsAppCartOrder, whatsappCartOrderHref } from '../lib/whatsapp-order.ts';
 import { cartTotals, discountedPrice, formatMoney, productHref } from '../lib/pricing.ts';
-import { PHONE_COMMERCIAL, SITE_URL } from '../lib/site.ts';
+import { SITE_URL } from '../lib/site.ts';
 
 const fields = { phoneCountry: 'SN', phone: '77 000 00 00', street: 'Rue de démonstration', city: 'Dakar', deliveryCountry: 'Sénégal', customerName: '', note: '', quantity: 1 };
 const products = [
@@ -10,7 +10,7 @@ const products = [
   { _id: 'locks', title: 'Huile Locks', category: 'huile', subCategory: 'huile-cheveux', price: 8000, quantity: 1, stock: 10 },
 ];
 const prepare = (currency = 'XOF') => ({
-  fields, phone: PHONE_COMMERCIAL.tel,
+  fields,
   lines: products.map(product => ({
     name: product.title, quantity: product.quantity, maxQuantity: product.stock,
     displayedPrice: formatMoney(discountedPrice(product.price, product.discount), currency, 625),
@@ -27,12 +27,12 @@ test('cart request retains every product, its quantity, discounted prices, line 
   assert.equal(url.origin + url.pathname, 'https://wa.me/221780128486');
   const message = url.searchParams.get('text');
   for (const [index, line] of order.lines.entries()) {
-    assert.ok(message.includes(`${index + 1}. ${line.name}\nQuantité : ${line.quantity}\nPrix unitaire : ${line.displayedPrice}\nTotal produit : ${line.displayedLineTotal}\nLien : ${line.publicProductUrl}`));
+    assert.ok(message.includes(`Produit ${index + 1} : ${line.name}\nQuantité : ${line.quantity}\nPrix unitaire : ${line.displayedPrice}\nTotal produit : ${line.displayedLineTotal}\nLien du produit : ${line.publicProductUrl}`));
   }
   assert.ok(message.includes(`Sous-total produits : ${order.displayedSubtotal}`));
   assert.equal(order.displayedSubtotal.replace(/\s/g, ' '), '21 581 FCFA');
-  assert.equal(message.match(/Téléphone :/g).length, 1);
-  assert.ok(message.includes('Frais de livraison à confirmer.'));
+  assert.equal(message.match(/Téléphone du client :/g).length, 1);
+  assert.ok(message.includes('Livraison : frais à confirmer'));
 });
 
 test('cart USD amounts use the displayed currency and aggregate before rounding', () => {
@@ -61,8 +61,8 @@ test('cart message encodes optional details once and validates the Canadian phon
   const href = whatsappCartOrderHref(order);
   const message = new URL(href).searchParams.get('text');
   assert.equal(href, `https://wa.me/221780128486?text=${encodeURIComponent(message)}`);
-  assert.ok(message.includes('Téléphone : +18195550123'));
-  assert.ok(message.includes('Nom : Démonstration\nNote : Entrée #2 & repère\nAprès 18h'));
+  assert.ok(message.includes('Téléphone du client : +18195550123'));
+  assert.ok(message.includes('Note : Entrée #2 & repère\nAprès 18h'));
 });
 
 test('large carts are not truncated and request preparation never changes the input cart', () => {
@@ -70,8 +70,8 @@ test('large carts are not truncated and request preparation never changes the in
   const before = JSON.stringify(order);
   const many = { ...order, lines: Array.from({ length: 30 }, (_, index) => ({ ...order.lines[0], name: `Soin ${index + 1}` })) };
   const message = new URL(whatsappCartOrderHref(many)).searchParams.get('text');
-  assert.ok(message.includes('30. Soin 30'));
-  assert.equal((message.match(/Lien :/g) || []).length, 30);
+  assert.ok(message.includes('Produit 30 : Soin 30'));
+  assert.equal((message.match(/Lien du produit :/g) || []).length, 30);
   whatsappCartOrderHref(order);
   assert.equal(JSON.stringify(order), before);
 });
