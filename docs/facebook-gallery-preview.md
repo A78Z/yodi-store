@@ -49,3 +49,15 @@ Les vidéos ouvrent explicitement leur publication Facebook d’origine après c
 **Non vérifiés avec des médias réels :** apparence mobile/ordinateur de la galerie, jonction des boucles, pause, tactile, réduction des mouvements, liens photo/vidéo et renouvellement des URL Meta. Aucune capture de galerie fonctionnelle n’est fournie, puisque le flux autorisé manque. Cette partie ne peut être déclarée terminée avant connexion et contrôles réels.
 
 Aucune écriture dans la base, aucune modification de production, du panier, du checkout, des paiements, des emails ou de l’administration.
+
+## Changement de demande : galerie provisoire du site
+
+Le client a demandé de mettre les cartes en place en attendant, puis de permettre la publication de photos et vidéos depuis l’admin. Cette demande remplace la dépendance obligatoire à Facebook pour la galerie provisoire.
+
+L’accueil de la Preview refonte utilise désormais les photos réelles des produits déjà chargés, sans requête supplémentaire ni écriture dans la base. Les photos identiques et le logo de remplacement sont exclus. Chaque carte ouvre la fiche produit dans le même onglet. Le nom accessible devient « La galerie des soins Yodi-K » : aucune origine Facebook n’est revendiquée. La connexion Meta préparée reste inactive.
+
+Le composant générique `HomeMediaGallery` conserve les deux rangées, les dimensions réservées, le rendu intégral des images, la pause et le mode manuel sur tactile/réduction des mouvements. Avec moins de dix photos, la galerie reste statique et consultable horizontalement.
+
+L’admin est un autre dépôt, identifié par `ADMIN_URL=https://admin.yodi-k.com` et `ADMIN_HANDOFF.md`. Ce frontend n’a ni rôle administrateur ni système d’upload. Le dossier ou dépôt de cet admin a été demandé afin d’ajouter la gestion des médias avec son authentification et son stockage existants. Aucun faux bouton de publication ni route d’administration publique n’a été ajouté à la boutique.
+
+Validation locale : ESLint ciblé et diff check réussis ; TypeScript conserve les neuf erreurs préexistantes. La vérification visuelle des cartes sur Preview reste à effectuer après déploiement.
