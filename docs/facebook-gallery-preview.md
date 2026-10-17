@@ -61,3 +61,11 @@ Le composant générique `HomeMediaGallery` conserve les deux rangées, les dime
 L’admin est un autre dépôt, identifié par `ADMIN_URL=https://admin.yodi-k.com` et `ADMIN_HANDOFF.md`. Ce frontend n’a ni rôle administrateur ni système d’upload. Le dossier ou dépôt de cet admin a été demandé afin d’ajouter la gestion des médias avec son authentification et son stockage existants. Aucun faux bouton de publication ni route d’administration publique n’a été ajouté à la boutique.
 
 Validation locale : ESLint ciblé et diff check réussis ; TypeScript conserve les neuf erreurs préexistantes. La vérification visuelle des cartes sur Preview reste à effectuer après déploiement.
+
+### Vérification de la galerie provisoire
+
+- Code déployé : `d74db0f` ; Preview chargée : https://yodi-store-rnde09x2g-a78zs-projects.vercel.app/#pied-de-page .
+- Six cartes réelles observées en deux rangées, après le bloc conseil et avant le footer sombre ; photos chargées et présentées intégralement.
+- Rendu ordinateur et Firefox adaptatif 375 × 844 contrôlés visuellement. La galerie reste contenue dans la page ; les rangées sont consultables horizontalement. Six photos ne déclenchent pas de boucle automatique.
+- Clic sur la carte Chantily Glow Skin : fiche produit correspondante chargée dans le même onglet, titre et URL vérifiés.
+- 49/49 tests Node réussis. Aucun média vidéo n’a été ajouté ; la publication depuis l’admin attend toujours l’accès à son dépôt et à son stockage.
