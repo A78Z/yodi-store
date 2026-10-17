@@ -171,7 +171,7 @@ export default function ConditionDutilisations() {
         <section className={styles.contact} aria-labelledby="cgv-contact">
           <div>
             <p className={styles.eyebrow}><span aria-hidden="true" />À votre écoute</p>
-            <h2 id="cgv-contact">Une question <em>sur ces conditions ?</em></h2>
+            <h2 id="cgv-contact">Une question <em>sur ces conditions&nbsp;?</em></h2>
             <p>Pour toute question concernant ces conditions, contactez-nous à <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
           </div>
           <a className={styles.email} href={`mailto:${CONTACT_EMAIL}`}><Mail size={17} aria-hidden="true" />Nous écrire<span className="sr-only"> à {CONTACT_EMAIL}</span><ArrowUpRight size={16} aria-hidden="true" /></a>
