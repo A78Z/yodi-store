@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import type { IProduct } from "@/lib/models/product";
 import useStore from "@/lib/store-manage";
 import { trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
+import WhatsAppOrderButton from "@/components/WhatsAppOrderButton";
 import NotifyButton from "@/components/NotifyButton";
 import { formatProductName } from "@/lib/format";
 import { discountedPrice, formatMoney, productHref } from "@/lib/pricing";
@@ -80,6 +81,7 @@ export default function HomeProductTile({ product, categoryTitle }: { product: I
           {added ? <Check size={16} aria-hidden="true" /> : <ShoppingBag size={16} aria-hidden="true" />}
           {added ? "Ajouté" : canAdd ? <><span className={styles.desktopAction}>Ajouter au panier</span><span className={styles.mobileAction}>Ajouter</span></> : soldOut ? "Épuisé" : "Limite atteinte"}
         </button>}
+        <WhatsAppOrderButton product={product} name={name} displayedPrice={formatMoney(finalPrice, currency, usdRate)} />
       </div>
     </article>
   );

@@ -1,0 +1,28 @@
+.button {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 10px;
+  padding: 11px 10px;
+  border: 1px solid #80513f;
+  border-radius: 24px;
+  background: #faf7f2;
+  color: #80513f;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+}
+.button svg { flex-shrink: 0; }
+.button span { min-width: 0; }
+.button:hover { background: #eee3d7; }
+.button:focus-visible { outline: 2px solid #80513f; outline-offset: 3px; }
+@media (max-width: 760px) {
+  .button { padding: 10px 6px; font-size: 11px; gap: 5px; }
+}

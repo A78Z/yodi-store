@@ -9,6 +9,7 @@ import useStore from "@/lib/store-manage";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
+import WhatsAppOrderButton from "@/components/WhatsAppOrderButton";
 import NotifyButton from "@/components/NotifyButton";
 
 interface PaginationInfo {
@@ -175,11 +176,8 @@ const ProductSubcategory = ({
           : products.map((product) => {
             const indisponible = product.disponible === false;
             return (
-            <Link
-              href={`/${category}/${subcategory}/${product._id}`}
-              key={product._id as string}
-              className="flex flex-col h-full group"
-            >
+            <article key={product._id as string} className="flex flex-col h-full group">
+              <Link href={`/${category}/${subcategory}/${product._id}`} className="flex flex-1 flex-col">
               {/* Contenu principal avec flex-1 pour occuper l'espace disponible */}
               <div className="flex-1 flex flex-col items-center gap-3">
                 <div className="relative overflow-hidden rounded-lg">
@@ -220,6 +218,7 @@ const ProductSubcategory = ({
                 </div>
               </div>
 
+              </Link>
               <div className="mt-auto pt-4">
                 {indisponible ? (
                   <NotifyButton
@@ -239,8 +238,11 @@ const ProductSubcategory = ({
                     Ajouter au panier
                   </button>
                 )}
+                <WhatsAppOrderButton product={product} name={product.title} displayedPrice={`${selectedCurrency === "XOF"
+                  ? Math.round(product.price - (product.price * (product.discount ?? 0)) / 100)
+                  : Number((product.price - (product.price * (product.discount ?? 0)) / 100) / Number(usdRate || 1)).toFixed(2)} ${selectedCurrency === "XOF" ? "FCFA" : "USD"}`} />
               </div>
-            </Link>
+            </article>
             );
           })}
       </div>

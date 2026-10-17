@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import type { IProduct } from "@/lib/models/product";
 import useStore from "@/lib/store-manage";
 import { trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
+import WhatsAppOrderButton from "@/components/WhatsAppOrderButton";
 import NotifyButton from "@/components/NotifyButton";
 import { formatProductName } from "@/lib/format";
 import { discountedPrice, formatMoney, productHref } from "@/lib/pricing";
@@ -98,6 +99,7 @@ const HomeProductCard = ({ product, priority = false }: { product: IProduct; pri
             {added ? "Ajouté" : "Ajouter"}
           </button>
         )}
+        <WhatsAppOrderButton product={product} name={name} displayedPrice={formatMoney(finalPrice, currency, usdRate)} />
       </div>
     </article>
   );
