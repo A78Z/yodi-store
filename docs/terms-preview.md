@@ -21,6 +21,25 @@ Les paragraphes utilisent une taille de 14 px et un interligne ample, avec des l
 
 ## Validation en Preview
 
-À compléter après le déploiement et les contrôles visuels.
+Preview finale : https://yodi-store-pvxvtn3d6-a78zs-projects.vercel.app/condition-dutilisations
+
+Commits fonctionnels : `1d30eb4`, puis `ddbd726` pour empêcher le point d’interrogation du titre de contact de rester seul sur une ligne à 320 px. Déploiement final `4FKRMYjGGMbgV4in25Sq345h9uF1`, prêt dans Vercel ; GitHub confirme `success`, environnement `Preview`, `production_environment: false`.
+
+- Inspection de la première Preview à 1280, 375 et 320 px : titre, sommaire, cinq articles, listes et encarts lisibles. Les paragraphes et adresses reviennent à la ligne. Le sommaire est à gauche sur ordinateur et avant les articles sur mobile.
+- Depuis « Dans cette page », Tab atteint Présentation, puis les entrées suivantes. Après trois tabulations supplémentaires, Entrée sur Livraison ouvre `#article-4` ; URL et article ciblé confirmés. Depuis l’article 4, Tab atteint Revenir au premier article ; Entrée ouvre `#article-1`.
+- Les cinq ancres, les titres associés et les styles de focus sont relus dans le code ; les noms de liens et la position de focus sont également confirmés dans l’arbre d’accessibilité.
+- Encarts Livraison et Paiement et pied du document inspectés à 375 et 320 px. La mention « Consulté le 17/10/2026 » est présente, sans fausse date de révision. Les deux liens mailto et leur adresse sont vérifiés sans ouverture ni envoi d’email.
+- La Preview finale est inspectée à 320 px sur le bas de page : le point d’interrogation reste lié au titre, le contact et le bouton Nous écrire tiennent dans le cadre. La comparaison des textes confirme à nouveau que les cinq articles sont identiques après cette retouche.
+- Les règles de réduction des animations sont relues sans changer de préférence système. Contrôle en émulation Firefox, sans téléphone physique. Aucun formulaire d’acceptation, achat, paiement ou compte utilisé. Les dimensions de contrôle sont restaurées à 375 × 844 et la vue adaptative est refermée.
+
+## Captures
+
+Captures réelles des Previews, sans interface du navigateur ni données personnelles. Le haut de l’image est recadré pour les vues de début de page. Le bouton noir flottant appartient à Vercel.
+
+- `screenshots/terms-desktop.png` — sommaire et cinq articles à 1280 px, Preview `1d30eb4`.
+- `screenshots/terms-mobile-375.png` — début de page à 375 px, même Preview.
+- `screenshots/terms-mobile-320.png` — début de page à 320 px, même Preview.
+- `screenshots/terms-mobile-375-details.png` — encarts et contact à 375 px, même Preview.
+- `screenshots/terms-mobile-320-details.png` — bas de page à 320 px, Preview finale `ddbd726`.
 
 Fichiers fonctionnels : `app/condition-dutilisations/page.tsx`, `app/condition-dutilisations/page.module.css`.
