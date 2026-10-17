@@ -12,6 +12,7 @@ import { discountedPrice, formatMoney } from "@/lib/pricing";
 import { remainingProductQuantity } from "@/lib/product-quantity";
 import { PHONE_COMMERCIAL, WHATSAPP } from "@/lib/site";
 import { trackViewContent, trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
+import WhatsAppOrderButton from "@/components/WhatsAppOrderButton";
 import NotifyButton from "@/components/NotifyButton";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import styles from "./ProductDetail.module.css";
@@ -145,6 +146,8 @@ export default function ProductDetail({ initialProduct: product, categoryTitle, 
             </button>
             <p className={styles.feedback} role="status" aria-live="polite">{added ? `${addedQuantity} article${addedQuantity > 1 ? "s" : ""} ajouté${addedQuantity > 1 ? "s" : ""} à votre panier.` : inCart > 0 ? `${inCart} article${inCart > 1 ? "s" : ""} déjà dans votre panier.` : ""}</p>
           </>}
+
+          <WhatsAppOrderButton product={product} name={name} displayedPrice={formatMoney(price, currency, usdRate)} />
 
           <div className={styles.delivery}><Truck size={20} aria-hidden="true" /><div><strong>Livraison</strong><p>Les frais sont indiqués au moment de la commande.</p></div></div>
           {(product.brand || product.sku || product.etiquette) && <dl className={styles.references}>
