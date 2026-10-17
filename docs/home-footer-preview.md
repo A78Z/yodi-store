@@ -18,8 +18,24 @@ Le pied de page est placé après le contenu principal pour former un repère s�
 - `git diff --check` : réussi.
 - Aucun build ni serveur local lancé. Aucune donnée, commande, paiement ou compte modifié.
 
-## Validation visuelle
+## Validation en Preview du 17 octobre 2026
 
-À compléter après déploiement Preview.
+Preview finale : https://yodi-store-ricifr34t-a78zs-projects.vercel.app/#pied-de-page
+
+Commits fonctionnels : `9f2dd3b`, puis `d4033a4` pour réserver l’espace à droite du copyright et éviter le bouton partagé « Retour en haut ». Déploiement Vercel `DNtGZ66k36NmmZCPiunAormm3Jo7` prêt, branche `refonte`, environnement Preview ; le statut de déploiement GitHub confirme `success` et `production_environment: false`.
+
+- Contrôle de la version finale à 1280, 375 et 320 px : encart, logo, navigation, contacts, paiements et copyright restent lisibles dans le cadre. Les libellés longs reviennent à la ligne. Le copyright de bureau est dégagé du bouton de retour en haut.
+- Tabulation depuis le titre de conseil : lien WhatsApp, logo, quatre réseaux sociaux, univers puis accès compte/panier. Focus clair observé sur le lien Huile. Activation au clavier de « Mon panier » : ouverture de `/panier`, état vide attendu, sans ajout ni commande. Parcours testé sur la première Preview ; le seul changement fonctionnel de la suivante concerne l’espacement du copyright.
+- URL et noms accessibles des contacts, réseaux et conditions de vente vérifiés dans l’arbre d’accessibilité et le code. Aucun appel téléphonique, email, message ou réseau social déclenché.
+- Contrastes calculés sur les couleurs CSS : minimum 5,33:1 pour les combinaisons de texte utilisées ; texte clair sur cacao supérieur à 8:1.
+- Réduction des animations vérifiée par lecture des règles CSS, sans changement de préférence système. Contrôle mobile en émulation Firefox ; aucun essai sur téléphone physique.
+
+Captures de la Preview finale, viewport étendu pour présenter le pied de page complet, recadrées uniquement en haut pour retirer la fin de la section produits :
+
+- `screenshots/home-footer-desktop.png` (1280 px)
+- `screenshots/home-footer-mobile-375.png`
+- `screenshots/home-footer-mobile-320.png`
+
+Le bouton flottant noir appartient à la barre Vercel. Les captures ne contiennent ni interface du navigateur ni données personnelles. La vue adaptative Firefox est refermée après vérification.
 
 Fichiers fonctionnels : `components/home/HomeFooter.tsx`, `components/home/HomeFooter.module.css`, `app/page.tsx`.
