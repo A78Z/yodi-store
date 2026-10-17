@@ -23,6 +23,10 @@ Focus visibles, formulaire nommé, champ étiqueté, titres hiérarchisés, stat
 
 ## Validation en Preview
 
-À compléter après déploiement.
+Preview déployée : https://yodi-store-41nm0gzc0-a78zs-projects.vercel.app/recherche?q=huile
+
+Commit fonctionnel `4ff4e80`, déploiement Vercel `F8iVGVQ4QYUiSBSptZbiD36iAPB1`. GitHub confirme la réussite, l’environnement `Preview` et `production_environment: false`.
+
+Les contrôles visuels et les parcours réels restent à terminer : Firefox est utilisé en parallèle, ses changements d’onglet ont interrompu la sélection de la Preview, puis une interaction a expiré. Aucune capture ni recherche dans la nouvelle Preview n’est encore validée. La disponibilité de l’onglet a été demandée à l’utilisateur ; les vérifications statiques et le déploiement sont terminés.
 
 Fichiers fonctionnels : `app/recherche/page.tsx`, `app/recherche/page.module.css`, `components/home/HomeProductTile.tsx`, `lib/category-label.ts`, `lib/catalog.ts`.
