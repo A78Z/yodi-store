@@ -37,7 +37,7 @@ export default function WhatsAppOrderButton({ product, name, displayedPrice, ini
         </button>
       </DialogTrigger>
       <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay className={formStyles.overlay} />
       <DialogContent style={viewport ? { "--order-viewport-height": `${viewport.height}px`, "--order-viewport-top": `${viewport.top}px` } as CSSProperties : undefined} className={formStyles.modal} onOpenAutoFocus={(event) => event.preventDefault()}>
         {open && <WhatsAppOrderForm product={product} name={name} displayedPrice={displayedPrice} initialQuantity={initialQuantity} />}
       </DialogContent>
