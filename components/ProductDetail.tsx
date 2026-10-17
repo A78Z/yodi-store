@@ -147,7 +147,7 @@ export default function ProductDetail({ initialProduct: product, categoryTitle, 
             <p className={styles.feedback} role="status" aria-live="polite">{added ? `${addedQuantity} article${addedQuantity > 1 ? "s" : ""} ajouté${addedQuantity > 1 ? "s" : ""} à votre panier.` : inCart > 0 ? `${inCart} article${inCart > 1 ? "s" : ""} déjà dans votre panier.` : ""}</p>
           </>}
 
-          <WhatsAppOrderButton product={product} name={name} displayedPrice={formatMoney(price, currency, usdRate)} />
+          <WhatsAppOrderButton product={product} initialQuantity={quantity} name={name} displayedPrice={formatMoney(price, currency, usdRate)} />
 
           <div className={styles.delivery}><Truck size={20} aria-hidden="true" /><div><strong>Livraison</strong><p>Les frais sont indiqués au moment de la commande.</p></div></div>
           {(product.brand || product.sku || product.etiquette) && <dl className={styles.references}>

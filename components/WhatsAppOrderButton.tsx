@@ -1,20 +1,43 @@
-import { FaWhatsapp } from "react-icons/fa";
-import { whatsappOrderHref } from "@/lib/whatsapp-order";
-import { productHref } from "@/lib/pricing";
-import { PHONE_COMMERCIAL, SITE_URL } from "@/lib/site";
-import styles from "./WhatsAppOrderButton.module.css";
+"use client";
 
-export default function WhatsAppOrderButton({ product, name, displayedPrice }: {
-  product: { _id: unknown; category: string; subCategory?: string };
+import { useEffect, useState, type CSSProperties } from "react";
+import type { IProduct } from "@/lib/models/product";
+import { FaWhatsapp } from "react-icons/fa";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import WhatsAppOrderForm from "./WhatsAppOrderForm";
+import styles from "./WhatsAppOrderButton.module.css";
+import formStyles from "./WhatsAppOrderForm.module.css";
+
+export type WhatsAppOrderProduct = Pick<IProduct, "price" | "discount" | "stock" | "disponible" | "imageUrl" | "category" | "subCategory"> & { _id: unknown };
+
+export default function WhatsAppOrderButton({ product, name, displayedPrice, initialQuantity = 1 }: {
+  product: WhatsAppOrderProduct;
   name: string;
   displayedPrice: string;
+  initialQuantity?: number;
 }) {
-  const href = whatsappOrderHref(name, displayedPrice, new URL(productHref(product), SITE_URL).href, PHONE_COMMERCIAL.tel);
+  const [open, setOpen] = useState(false);
+  const [viewport, setViewport] = useState<{ height: number; top: number } | null>(null);
+  useEffect(() => {
+    if (!open || !window.visualViewport) return;
+    const visual = window.visualViewport;
+    const sync = () => setViewport({ height: visual.height, top: visual.offsetTop });
+    sync();
+    visual.addEventListener("resize", sync);
+    visual.addEventListener("scroll", sync);
+    return () => { visual.removeEventListener("resize", sync); visual.removeEventListener("scroll", sync); };
+  }, [open]);
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={styles.button}
-      aria-label={`Commander sur WhatsApp : ${name} (nouvel onglet)`}>
-      <FaWhatsapp size={19} aria-hidden="true" />
-      <span>Commander sur WhatsApp</span>
-    </a>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button type="button" className={styles.button} aria-label={`Commander sur WhatsApp : ${name}`}>
+          <FaWhatsapp size={19} aria-hidden="true" />
+          <span>Commander sur WhatsApp</span>
+        </button>
+      </DialogTrigger>
+      <DialogContent style={viewport ? { "--order-viewport-height": `${viewport.height}px`, "--order-viewport-top": `${viewport.top}px` } as CSSProperties : undefined} className={formStyles.modal} showCloseButton={false} onOpenAutoFocus={(event) => event.preventDefault()}>
+        {open && <WhatsAppOrderForm product={product} name={name} displayedPrice={displayedPrice} initialQuantity={initialQuantity} />}
+      </DialogContent>
+    </Dialog>
   );
 }
