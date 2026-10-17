@@ -77,7 +77,7 @@ export default function HomeProductTile({ product, categoryTitle }: { product: I
           aria-label={canAdd ? `Ajouter ${name} au panier` : `Quantité maximale de ${name} atteinte dans le panier`}
           className={`${styles.add} ${added ? styles.added : ""}`}>
           {added ? <Check size={16} aria-hidden="true" /> : <ShoppingBag size={16} aria-hidden="true" />}
-          {added ? "Ajouté" : canAdd ? "Ajouter au panier" : "Limite atteinte"}
+          {added ? "Ajouté" : canAdd ? <><span className={styles.desktopAction}>Ajouter au panier</span><span className={styles.mobileAction}>Ajouter</span></> : "Limite atteinte"}
         </button>}
       </div>
     </article>
