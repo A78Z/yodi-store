@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { IProduct } from "@/lib/models/product";
 import { categoryLabel } from "@/lib/catalog";
-import HomeProductCard from "@/components/home/HomeProductCard";
+import HomeProductTile from "@/components/home/HomeProductTile";
 import styles from "./HomeProducts.module.css";
 
 export default function HomeProducts({ products }: { products: IProduct[] }) {
@@ -22,7 +22,7 @@ export default function HomeProducts({ products }: { products: IProduct[] }) {
         <ul className={styles.grid}>
           {products.map(product => (
             <li key={String(product._id)}>
-              <HomeProductCard product={product} categoryTitle={categoryLabel(product.category)} />
+              <HomeProductTile product={product} categoryTitle={categoryLabel(product.category)} />
             </li>
           ))}
         </ul>
