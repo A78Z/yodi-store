@@ -10,6 +10,8 @@ import ProductModel from "@/lib/models/product";
 import CategoryModel from "@/lib/models/category";
 import { categories as LIBELLES } from "@/lib/sampledata";
 import type { Category } from "@/lib/types/types";
+import { categoryLabel } from "@/lib/category-label";
+export { categoryLabel } from "@/lib/category-label";
 
 export interface SousCategorieAffichee {
   slug: string;
@@ -35,10 +37,6 @@ const humanize = (slug: string) => {
   const text = slug.replace(/[-_]+/g, " ").trim();
   return text.charAt(0).toUpperCase() + text.slice(1);
 };
-
-export function categoryLabel(slug: string): string {
-  return LIBELLES.find((c) => c.slug === slug)?.title ?? humanize(slug);
-}
 
 export function subCategoryLabel(slug: string): string {
   for (const c of LIBELLES) {

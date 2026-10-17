@@ -27,6 +27,7 @@ export default function HomeProductTile({ product, categoryTitle }: { product: I
   const discount = product.discount ?? 0;
   const finalPrice = discountedPrice(product.price, discount);
   const upcoming = product.disponible === false;
+  const soldOut = !upcoming && product.stock <= 0;
   const canAdd = !upcoming && remainingProductQuantity(product.stock, inCart) > 0;
   const photo = product.imageUrl && product.imageUrl !== "/logo-yodi-k.png" ? product.imageUrl : "";
 
@@ -74,10 +75,10 @@ export default function HomeProductTile({ product, categoryTitle }: { product: I
       <div className={styles.actions}>
         {upcoming ? <NotifyButton productId={id} productName={product.title} productImage={photo} variant="card" className={styles.notifyButton} /> : <button
           type="button" onClick={handleAddToCart} disabled={!canAdd}
-          aria-label={canAdd ? `Ajouter ${name} au panier` : `Quantité maximale de ${name} atteinte dans le panier`}
+          aria-label={canAdd ? `Ajouter ${name} au panier` : soldOut ? `${name} : produit épuisé` : `Quantité maximale de ${name} atteinte dans le panier`}
           className={`${styles.add} ${added ? styles.added : ""}`}>
           {added ? <Check size={16} aria-hidden="true" /> : <ShoppingBag size={16} aria-hidden="true" />}
-          {added ? "Ajouté" : canAdd ? <><span className={styles.desktopAction}>Ajouter au panier</span><span className={styles.mobileAction}>Ajouter</span></> : "Limite atteinte"}
+          {added ? "Ajouté" : canAdd ? <><span className={styles.desktopAction}>Ajouter au panier</span><span className={styles.mobileAction}>Ajouter</span></> : soldOut ? "Épuisé" : "Limite atteinte"}
         </button>}
       </div>
     </article>
