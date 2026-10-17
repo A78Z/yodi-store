@@ -26,6 +26,7 @@ const ScrollToTopButton = () => {
       onClick={scrollToTop}
       aria-label="Retour en haut de la page"
       title="Retour en haut"
+      style={{ bottom: "calc(6rem + env(safe-area-inset-bottom, 0px))" }}
       className={`fixed bottom-24 right-4 md:right-6 z-[500] w-11 h-11 md:w-12 md:h-12 rounded-full bg-[#A36F5E] hover:bg-[#916253] text-white flex items-center justify-center shadow-[0_4px_16px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#A36F5E] ${
         isVisible ? "opacity-100 visible translate-y-0" : "opacity-0 invisible translate-y-3 pointer-events-none"
       }`}
