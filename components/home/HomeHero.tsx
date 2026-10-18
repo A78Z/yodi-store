@@ -7,6 +7,24 @@ import { useEffect, useRef, useState } from "react";
 import { HERO_INTERVAL_MS, heroSwipeDirection, homeSlides, nextHeroSlide } from "@/lib/home-slides";
 import styles from "./HomeHero.module.css";
 
+function HeroMedia({ index, active, reducedMotion, alt, position }: { index: number; active: boolean; reducedMotion: boolean; alt: string; position: string }) {
+  const video = useRef<HTMLVideoElement>(null);
+  const path = `/videos/hero/yodik-slide-0${index + 1}`;
+  useEffect(() => {
+    const element = video.current;
+    if (!element || !active || reducedMotion) return;
+    // Set the media property as well as the HTML attribute for inline iOS autoplay.
+    element.muted = true;
+    element.play().catch(() => { /* The poster remains visible if autoplay is blocked. */ });
+    return () => { element.pause(); };
+  }, [active, reducedMotion]);
+
+  // Unmount inactive players so they stop immediately and return to their poster.
+  return active && !reducedMotion
+    ? <video ref={video} src={`${path}.mp4`} autoPlay muted loop playsInline preload="metadata" poster={`${path}-poster.jpg`} aria-label={alt} style={{ objectPosition: position }} className={`${styles.photo} ${styles.video}`} />
+    : <Image src={`${path}-poster.jpg`} alt={alt} fill priority={index === 0} sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1264px) 50vw, 600px" style={{ objectPosition: position }} className={styles.photo} />;
+}
+
 export default function HomeHero({ univers }: { univers: { slug: string }[] }) {
   const slides = homeSlides(univers);
   const [current, setCurrent] = useState(0);
@@ -74,7 +92,7 @@ export default function HomeHero({ univers }: { univers: { slug: string }[] }) {
             <div className={styles.signature} aria-hidden="true"><span/>Des gestes simples. Votre moment.</div>
           </div>
           <div className={styles.visual}>
-            <Image src={slide.image} alt={slide.alt} fill priority={index === 0} sizes="(max-width: 760px) calc(100vw - 32px), (max-width: 1264px) 50vw, 600px" style={{ objectPosition: slide.position }} className={styles.photo}/>
+            <HeroMedia index={index} active={index === current} reducedMotion={reducedMotion} alt={slide.alt} position={slide.position} />
             <div className={styles.photoShade}/><span className={styles.photoLabel}>{slide.caption}</span>
             <span className={styles.photoNumber} aria-hidden="true">0{index + 1}</span>
           </div>
