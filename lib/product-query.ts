@@ -102,8 +102,19 @@ export async function getProductPage(searchParams: URLSearchParams) {
 
     // Récupération des produits avec pagination et tri dynamique
     const [rows, total] = await Promise.all([
-      ProductModel.find(filter).select("-__v -usage -benefits")
-        .skip(skip).limit(limit).sort(sortConfig).lean<Record<string, unknown>[]>(),
+      sort === "price-asc" || sort === "price-desc"
+        // Trier sur le prix affiché, remise comprise. Agrégation en lecture seule.
+        ? ProductModel.aggregate<Record<string, unknown>>([
+            { $match: filter },
+            { $addFields: { _catalogPrice: { $subtract: ["$price", {
+              $divide: [{ $multiply: ["$price", { $ifNull: ["$discount", 0] }] }, 100],
+            }] } } },
+            { $sort: { _catalogPrice: sort === "price-asc" ? 1 : -1, _id: 1 } },
+            { $skip: skip }, { $limit: limit },
+            { $project: { __v: 0, usage: 0, benefits: 0, _catalogPrice: 0 } },
+          ])
+        : ProductModel.find(filter).select("-__v -usage -benefits")
+            .skip(skip).limit(limit).sort(sortConfig).lean<Record<string, unknown>[]>(),
       ProductModel.countDocuments(filter),
     ]);
     const products = rows.map(serializeProduct);

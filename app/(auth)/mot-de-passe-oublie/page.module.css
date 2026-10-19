@@ -1,0 +1,17 @@
+.layout { align-items: start; }
+.help { color: #68594e; font-size: 11px; line-height: 1.8; margin: 8px 0 0; }
+.submit { margin-top: 24px; font-size: 13px; }
+.submit > svg { flex-shrink: 0; }
+.sent { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid #cdd2c5; border-radius: 7px; background: #f2f4ee; margin-bottom: 24px; }
+.sent > svg { flex-shrink: 0; color: #4f6142; margin-top: 2px; }
+.sent p { color: #4f6142; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; margin: 0; }
+.code { text-align: center; letter-spacing: .25em; font-variant-numeric: tabular-nums; }
+.retry { margin-top: 20px; text-align: center; }
+.retry p { color: #68594e; font-size: 11px; line-height: 1.8; margin: 0; }
+.retry button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 0; color: #80513f; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; background: transparent; cursor: pointer; }
+.retry button:disabled { cursor: default; color: #68594e; }
+.notice { color: #68594e; font-size: 12px; line-height: 1.8; padding: 14px; background: #faf7f2; border: 1px solid #e8ded5; border-radius: 7px; margin-bottom: 22px; }
+.success { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
+.success > svg { color: #4f6142; }
+.success p { color: #68594e; font-size: 13px; line-height: 1.8; margin: 0; }
+.success:focus-visible { outline: 2px solid #80513f; outline-offset: 4px; }

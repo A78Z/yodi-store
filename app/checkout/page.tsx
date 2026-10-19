@@ -1,649 +1,161 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import useStore from "@/lib/store-manage";
 import { useSession } from "next-auth/react";
-import { toast } from "sonner";
+import type { Session } from "next-auth";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  CreditCard,
-  Loader,
-  MapPin,
-  MessageSquare,
-  ShoppingBag,
-  Truck,
-  User,
-} from "lucide-react";
 import Image from "next/image";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronRight, LoaderCircle, ShoppingBag, Truck, UserRound } from "lucide-react";
 import { deleliveryZones } from "@/lib/sampledata";
-import { trackInitiateCheckout, trackPurchase, trackAddPaymentInfo, sendToCAPI } from "@/components/MetaPixel";
+import { cartTotals, discountedPrice, formatMoney, productHref } from "@/lib/pricing";
+import { formatProductName } from "@/lib/format";
+import { trackInitiateCheckout, trackPurchase, sendToCAPI } from "@/components/MetaPixel";
+import styles from "./page.module.css";
 
-const CheckoutPage = () => {
-  const { data: session } = useSession();
+const subscribeHydration = (onChange: () => void) => useStore.persist.onFinishHydration(onChange);
+const hydrationSnapshot = () => useStore.persist.hasHydrated();
+const serverSnapshot = () => false;
+
+export default function CheckoutPage() {
+  const { data: session, status } = useSession();
+  const carts = useStore((state) => state.carts);
+  const hydrated = useSyncExternalStore(subscribeHydration, hydrationSnapshot, serverSnapshot);
+  return <main className={styles.page}><div className={styles.container}>
+    <nav className={styles.breadcrumb} aria-label="Fil d’Ariane"><Link href="/">Accueil</Link><ChevronRight size={12} aria-hidden="true" /><Link href="/panier">Panier</Link><ChevronRight size={12} aria-hidden="true" /><span aria-current="page">Commande</span></nav>
+    <header className={styles.header}>
+      <p className={styles.eyebrow}>Maison Yodi-K</p>
+      <h1>Votre commande<span aria-hidden="true">.</span></h1>
+      <p>Encore quelques détails pour recevoir vos soins.</p>
+      <Link href="/panier" className={styles.back}><ArrowLeft size={16} aria-hidden="true" />Retour au panier</Link>
+    </header>
+    {!hydrated || status === "loading" ? <div className={styles.empty} role="status" aria-busy="true"><ShoppingBag size={28} aria-hidden="true" /><p>Préparation de votre commande…</p></div>
+      : carts.length === 0 ? <section className={styles.empty} aria-labelledby="empty-title"><ShoppingBag size={30} strokeWidth={1.3} aria-hidden="true" /><h2 id="empty-title">Votre panier est encore vide.</h2><p>Choisissez vos soins avant de passer à la commande.</p><Link href="/" className={styles.primary}>Découvrir les soins<ArrowRight size={17} aria-hidden="true" /></Link></section>
+      : <CheckoutForm key={session?.user?.id || "guest"} user={session?.user} />}
+  </div></main>;
+}
+
+function CheckoutForm({ user }: { user?: Session["user"] }) {
   const { carts, selectedCurrency, usdRate } = useStore();
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastname, setLastname] = useState(session?.user?.lastname);
-  const [firstname, setFirstname] = useState(session?.user?.firstname);
-  const [email, setEmail] = useState(session?.user?.email);
-  const [country, setCountry] = useState(session?.user?.country);
-  const [city, setCity] = useState(session?.user?.city);
+  // Wait for session resolution before mounting, so saved details prefill once.
+  const [firstname, setFirstname] = useState(user?.firstname || "");
+  const [lastname, setLastname] = useState(user?.lastname || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [country, setCountry] = useState(user?.country || "");
+  const [city, setCity] = useState(user?.city || "");
+  const [zip, setZip] = useState(user?.zip || "");
   const [delivery, setDelivery] = useState("");
-  const [address, setAddress] = useState(session?.user?.address);
+  const [address, setAddress] = useState(user?.address || "");
   const [message, setMessage] = useState("");
-  const [deliveryZones, setDeliveryZones] = useState<string[]>([]);
-  // Calcul du sous-total avec remises
-  const subTotal = carts.reduce(
-    (acc, cart) =>
-      acc +
-      (cart.price - (cart.discount ? (cart.price * cart.discount) / 100 : 0)) *
-      cart.quantity,
-    0
-  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const [error, setError] = useState("");
+  const requestPending = useRef(false);
+  const initiated = useRef(false);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const successRef = useRef<HTMLDivElement>(null);
+  const totals = cartTotals(carts);
+  const shippingCost = 1500; // Existing fixed fee, also enforced by /api/checkout.
+  const totalXof = totals.subtotal + shippingCost;
+  const total = selectedCurrency === "XOF" ? totalXof : Number((totalXof / Number(usdRate || 1)).toFixed(2));
+  const money = (amount: number) => formatMoney(amount, selectedCurrency, usdRate);
+  const deliveryZones = country === "senegal" ? deleliveryZones.senegal : country === "canada" ? deleliveryZones.canada : [];
 
-  const shippingCost = 1500;
-  const total =
-    selectedCurrency === "XOF"
-      ? subTotal + shippingCost
-      : Number((subTotal + shippingCost) / Number(usdRate || 1)).toFixed(2);
-
-  // Meta Pixel: Track InitiateCheckout when page loads
   useEffect(() => {
-    if (carts.length > 0) {
-      const eventId = trackInitiateCheckout({
-        value: subTotal,
-        currency: selectedCurrency,
-        num_items: carts.reduce((acc, cart) => acc + cart.quantity, 0),
-        content_ids: carts.map((cart) => cart.id),
-      });
+    if (initiated.current || !carts.length) return;
+    initiated.current = true;
+    const payload = { value: totals.subtotal, currency: selectedCurrency, num_items: totals.quantity, content_ids: carts.map((cart) => cart.id) };
+    const eventId = trackInitiateCheckout(payload);
+    sendToCAPI("InitiateCheckout", { ...payload, content_type: "product" }, eventId);
+  }, [carts, totals.subtotal, totals.quantity, selectedCurrency]);
 
-      // Send to CAPI for better tracking reliability
-      sendToCAPI("InitiateCheckout", {
-        content_ids: carts.map((cart) => cart.id),
-        content_type: "product",
-        value: subTotal,
-        currency: selectedCurrency,
-        num_items: carts.reduce((acc, cart) => acc + cart.quantity, 0),
-      }, eventId);
+  async function handleCheckout(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (requestPending.current || confirmed) return;
+    if (!user || !carts.length || !deliveryZones.includes(delivery)) {
+      setError(!user ? "Connectez-vous pour confirmer votre commande." : !carts.length ? "Votre panier est vide." : "Choisissez une zone de livraison pour le pays sélectionné.");
+      requestAnimationFrame(() => errorRef.current?.focus());
+      return;
     }
-  }, []); // Only track once on page load
-
-  const handleCheckout = async () => {
-    console.log("Commande confirmée");
-
+    requestPending.current = true;
+    setIsLoading(true);
+    setError("");
     const orderData = {
-      products: carts,
-      shippingCost,
-      valueCurrency: selectedCurrency === "XOF" ? 1 : Number(usdRate),
-      selectedCurrency: selectedCurrency === "XOF" ? "FCFA" : "USD",
-      total:
-        selectedCurrency === "XOF"
-          ? Number(total).toLocaleString()
-          : Number(total).toFixed(2),
-      paymentMethod: "on-delivery",
-      shippingInfo: {
-        address,
-        city,
-        postalCode: session?.user?.zip || "",
-        country,
-        delivery,
-        message,
-        phone: session?.user?.phone || "",
-        firstname,
-        lastname,
-        email,
-        zip: session?.user?.zip || "",
-      },
-      status: "pending",
+      products: carts, shippingCost, valueCurrency: selectedCurrency === "XOF" ? 1 : Number(usdRate),
+      selectedCurrency: selectedCurrency === "XOF" ? "FCFA" : "USD", total,
+      paymentMethod: "on-delivery", status: "pending",
+      shippingInfo: { firstname: firstname.trim(), lastname: lastname.trim(), email: email.trim(), phone: phone.trim(), country, city: city.trim(), postalCode: zip.trim(), zip: zip.trim(), delivery, address: address.trim(), message: message.trim() },
     };
-
-    if (!session?.user) {
-      toast.error("Veuillez vous connecter pour confirmer votre commande", {
-        style: {
-          color: "#ef4444",
-        },
-        position: "top-right",
-      });
-      return;
-    }
-
-    if (!delivery) {
-      toast.error("Zone de livraison obligatoire", {
-        style: {
-          color: "#ef4444",
-        },
-        position: "top-right",
-      });
-      return;
-    }
     try {
-      setIsLoading(true);
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ orderData }),
-      });
+      const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderData }) });
       const data = await response.json();
-      if (response.ok) {
-        // Meta Pixel: Track Purchase event
-        const eventId = trackPurchase({
-          value: Number(total),
-          currency: selectedCurrency,
-          content_ids: carts.map((cart) => cart.id),
-          num_items: carts.reduce((acc, cart) => acc + cart.quantity, 0),
-          order_id: data.orderId || "",
-        });
-
-        // Send to CAPI for better tracking reliability
-        sendToCAPI("Purchase", {
-          content_ids: carts.map((cart) => cart.id),
-          content_type: "product",
-          value: Number(total),
-          currency: selectedCurrency,
-          num_items: carts.reduce((acc, cart) => acc + cart.quantity, 0),
-          order_id: data.orderId || "",
-        }, eventId);
-
-        toast.success(
-          "Commande confirmée, nous vous contacterons dans les prochaines heures.",
-          {
-            style: {
-              color: "#10b981",
-            },
-            position: "top-right",
-          }
-        );
-      } else {
-        toast.error(data.message, {
-          style: {
-            color: "#ef4444",
-          },
-          position: "top-right",
-        });
-      }
-    } catch (error) {
-      console.log("Erreur lors de la confirmation de la commande");
-      toast.error("Erreur lors de la confirmation de la commande", {
-        style: {
-          color: "#ef4444",
-        },
-        position: "top-right",
-      });
+      if (!response.ok) throw new Error(data.message || "La commande n’a pas pu être confirmée. Veuillez réessayer.");
+      setConfirmed(true);
+      const payload = { value: total, currency: selectedCurrency, content_ids: carts.map((cart) => cart.id), num_items: totals.quantity, order_id: data.orderId || "" };
+      const eventId = trackPurchase(payload);
+      sendToCAPI("Purchase", { ...payload, content_type: "product" }, eventId);
+      requestAnimationFrame(() => successRef.current?.focus());
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Erreur lors de la confirmation de la commande.");
+      requestAnimationFrame(() => errorRef.current?.focus());
     } finally {
+      requestPending.current = false;
       setIsLoading(false);
     }
-  };
+  }
 
-  useMemo(() => {
-    if (country === "senegal") {
-      setDeliveryZones(deleliveryZones.senegal);
-    } else if (country === "canada") {
-      setDeliveryZones(deleliveryZones.canada);
-    } else {
-      setDeliveryZones([]);
-    }
-  }, [country]);
+  if (confirmed) return <div ref={successRef} className={styles.empty} role="status" tabIndex={-1}><CheckCircle2 size={34} strokeWidth={1.3} aria-hidden="true" /><p className={styles.eyebrow}>Merci pour votre confiance</p><h2>Votre commande est confirmée.</h2><p>Nous vous contacterons dans les prochaines heures.</p><Link className={styles.primary} href="/">Revenir à la boutique<ArrowRight size={17} aria-hidden="true" /></Link></div>;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 lg:px-8 px-6 w-full font-josefin">
-      <div className="w-full flex flex-col items-start max-w-6xl mx-auto">
-        {/* Header avec navigation */}
-        <div className="w-full mb-8">
-          <Link
-            href="/panier"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-[#A36F5E] transition-colors duration-200 mb-4"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Retour au panier</span>
-          </Link>
-          <h1 className="text-3xl lg:text-4xl font-bold text-gray-800">
-            Facturation et Expédition
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Remplissez vos informations pour finaliser votre achat
-          </p>
+  return <form className={styles.layout} onSubmit={handleCheckout} aria-label="Informations de commande" aria-busy={isLoading}>
+    <div className={styles.formColumn}>
+      {!user && <div className={styles.account}><UserRound size={21} strokeWidth={1.4} aria-hidden="true" /><div><p>Un compte est nécessaire pour confirmer votre commande.</p><Link href="/connexion">Se connecter<ArrowRight size={14} aria-hidden="true" /></Link></div></div>}
+      <p className={styles.requiredNote}>Les champs marqués d’un astérisque (*) sont obligatoires.</p>
+      <fieldset className={styles.section} disabled={isLoading}>
+        <legend><span className={styles.number}>01</span>Vos coordonnées</legend>
+        <p className={styles.sectionNote}>Pour vous contacter au sujet de votre commande.</p>
+        <div className={styles.fields}>
+          <div className={styles.field}><label htmlFor="firstname">Prénom *</label><input id="firstname" name="firstname" autoComplete="given-name" value={firstname} onChange={(event) => setFirstname(event.target.value)} required pattern=".*\S.*" /></div>
+          <div className={styles.field}><label htmlFor="lastname">Nom *</label><input id="lastname" name="lastname" autoComplete="family-name" value={lastname} onChange={(event) => setLastname(event.target.value)} required pattern=".*\S.*" /></div>
+          <div className={styles.field}><label htmlFor="email">Adresse email *</label><input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></div>
+          <div className={styles.field}><label htmlFor="phone">Téléphone *</label><input id="phone" name="phone" type="tel" autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value)} required pattern=".*\S.*" /></div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
-          {/* Formulaire principal */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Informations personnelles */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-[#A36F5E]/10 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-[#A36F5E]" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-800">
-                  Informations personnelles
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="firstname"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Prénom *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Votre prénom"
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                    id="lastname"
-                    value={lastname}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setLastname(e.target.value)
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="lastname"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Nom *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Votre nom"
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                    id="firstname"
-                    value={firstname}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setFirstname(e.target.value)
-                    }
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="votre@email.com"
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                    id="email"
-                    value={email}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setEmail(e.target.value)
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="country"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Pays *
-                  </label>
-                  <select
-                    name="country"
-                    id="country"
-                    className="w-full p-[14px] border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200 bg-white"
-                    value={country}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setCountry(e.target.value)
-                    }
-                    required
-                  >
-                    <option value="">Sélectionnez votre pays</option>
-                    <option value="senegal">Sénégal</option>
-                    <option value="canada">Canada</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Adresse de livraison */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-[#A36F5E]/10 rounded-full flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-[#A36F5E]" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-800">
-                  Adresse de livraison
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="city"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Ville *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Votre ville"
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                    id="city"
-                    value={city}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setCity(e.target.value)
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="delivery"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Zone de livraison *
-                  </label>
-                  <select
-                    name="delivery"
-                    id="delivery"
-                    className="w-full p-[14px] border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200 bg-white"
-                    value={delivery}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setDelivery(e.target.value)
-                    }
-                    required
-                  >
-                    <option value="">Choisissez votre zone</option>
-                    {deliveryZones.map((zone) => (
-                      <option key={zone} value={zone}>{zone}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label
-                  htmlFor="address"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Adresse détaillée - Point de repère *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Votre adresse complète avec point de repère"
-                  className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200"
-                  id="address"
-                  maxLength={60}
-                  value={address}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setAddress(e.target.value)
-                  }
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Maximum 60 caractères
-                </p>
-              </div>
-            </div>
-
-            {/* Notes de commande */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-[#A36F5E]/10 rounded-full flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-[#A36F5E]" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-800">
-                  Informations complémentaires
-                </h2>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="message"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Notes de commande (facultatif)
-                </label>
-                <textarea
-                  placeholder="Commentaires concernant votre commande..."
-                  className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A36F5E] focus:border-transparent transition-all duration-200 resize-none"
-                  id="message"
-                  rows={4}
-                  value={message}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setMessage(e.target.value)
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Méthodes de paiement */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-[#A36F5E]/10 rounded-full flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-[#A36F5E]" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-800">
-                  Méthodes de paiement
-                </h2>
-              </div>
-
-              <div className="space-y-4">
-                {/* Paiement à la livraison - ACTIF */}
-                <div className="flex items-center justify-between p-4 bg-green-50 border-2 border-green-200 rounded-xl cursor-pointer hover:bg-green-100 transition-all duration-200">
-                  <div className="flex items-center gap-4">
-                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <Truck className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-green-800">
-                          Paiement à la livraison
-                        </p>
-                        <p className="text-xs text-green-600">
-                          Payez en espèces à la réception
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-green-500 text-white text-xs px-3 py-1 rounded-full font-medium">
-                    Actif
-                  </div>
-                </div>
-
-                {/* Wave - DÉSACTIVÉ */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 border-2 border-gray-200 rounded-xl opacity-60 cursor-not-allowed">
-                  <div className="flex items-center gap-4">
-                    <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Image
-                          src="/wave.png"
-                          alt="Wave"
-                          width={100}
-                          height={100}
-                          className="w-10 h-10 object-contain"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-600">
-                          Wave
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Paiement mobile Wave
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-gray-400 text-white text-xs px-3 py-1 rounded-full font-medium">
-                    Bientôt
-                  </div>
-                </div>
-
-                {/* Orange Money - DÉSACTIVÉ */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 border-2 border-gray-200 rounded-xl opacity-60 cursor-not-allowed">
-                  <div className="flex items-center gap-4">
-                    <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Image
-                          src="/orange-money.png"
-                          alt="Orange Money"
-                          width={100}
-                          height={100}
-                          className="w-10 h-10 object-contain"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-600">
-                          Orange Money
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Paiement mobile Orange
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-gray-400 text-white text-xs px-3 py-1 rounded-full font-medium">
-                    Bientôt
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-xs text-blue-700">
-                  <strong>Note :</strong> Pour le moment, seul le paiement à la
-                  livraison est disponible. Les autres méthodes de paiement
-                  seront bientôt opérationnelles.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Résumé de la commande */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sticky top-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-[#A36F5E]/10 rounded-full flex items-center justify-center">
-                  <ShoppingBag className="w-5 h-5 text-[#A36F5E]" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-800">
-                  Votre commande
-                </h2>
-              </div>
-
-              {/* Liste des produits */}
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-700">
-                    Produit(s)
-                  </span>
-                  <span className="text-sm font-medium text-gray-700">
-                    Sous Total
-                  </span>
-                </div>
-
-                {carts.map((cart) => (
-                  <div
-                    key={cart.id}
-                    className="flex items-center justify-between py-2 border-b border-gray-100"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800">
-                        {cart.title} * {cart.quantity}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-800 ml-2">
-                      {selectedCurrency === "XOF"
-                        ? Math.round(
-                          (cart.price -
-                            (cart.discount
-                              ? (cart.price * cart.discount) / 100
-                              : 0)) *
-                          cart.quantity
-                        )
-                        : Math.round(
-                          ((cart.price -
-                            (cart.discount
-                              ? (cart.price * cart.discount) / 100
-                              : 0)) *
-                            cart.quantity) /
-                          Number(usdRate || 1)
-                        )}
-                      {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Détails des coûts */}
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Sous-total</span>
-                  <span className="font-semibold text-gray-800">
-                    {selectedCurrency === "XOF" ? Math.round(subTotal).toLocaleString("fr-FR") : Number(subTotal / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Expédition</span>
-                  <span className="font-semibold text-gray-800">
-                    Frais de livraison: {selectedCurrency === "XOF" ? shippingCost.toLocaleString("fr-FR") : Number(shippingCost / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center py-3 bg-gray-50 rounded-xl px-4">
-                  <span className="text-lg font-bold text-gray-800">Total</span>
-                  <span className="text-xl font-bold text-[#A36F5E]">
-                    {total} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Bouton de paiement */}
-              <button
-                onClick={handleCheckout}
-                className="w-full bg-gradient-to-r from-[#A36F5E] to-[#916253] text-white py-4 rounded-xl font-bold text-lg hover:from-[#916253] hover:to-[#A36F5E] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2"
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader className="w-5 h-5 animate-spin" />{" "}
-                    <span>En cours...</span>
-                  </div>
-                ) : (
-                  <>
-                    <Truck className="w-5 h-5" />
-                    Confirmer la commande
-                  </>
-                )}
-              </button>
-
-              {/* Informations de sécurité */}
-              <div className="mt-6 text-center">
-                {/* <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-xs text-green-600 font-medium">
-                    Paiement sécurisé
-                  </span>
-                </div> */}
-                <p className="text-xs text-gray-500">
-                  Vos informations sont protégées
-                </p>
-              </div>
-            </div>
-          </div>
+      </fieldset>
+      <fieldset className={styles.section} disabled={isLoading}>
+        <legend><span className={styles.number}>02</span>Votre livraison</legend>
+        <p className={styles.sectionNote}>Indiquez l’adresse à laquelle recevoir vos soins.</p>
+        <div className={styles.fields}>
+          <div className={styles.field}><label htmlFor="country">Pays *</label><select id="country" name="country" autoComplete="country-name" value={country} onChange={(event) => { setCountry(event.target.value); setDelivery(""); }} required><option value="">Choisissez votre pays</option><option value="senegal">Sénégal</option><option value="canada">Canada</option></select></div>
+          <div className={styles.field}><label htmlFor="city">Ville *</label><input id="city" name="city" autoComplete="address-level2" value={city} onChange={(event) => setCity(event.target.value)} required pattern=".*\S.*" /></div>
+          <div className={styles.field}><label htmlFor="delivery">Zone de livraison *</label><select id="delivery" name="delivery" value={delivery} onChange={(event) => setDelivery(event.target.value)} required disabled={!deliveryZones.length} aria-describedby="zone-help"><option value="">Choisissez votre zone</option>{deliveryZones.map((zone) => <option key={zone} value={zone}>{zone}</option>)}</select><p id="zone-help" className={styles.help}>Les zones dépendent du pays choisi.</p></div>
+          <div className={styles.field}><label htmlFor="zip">Code postal *</label><input id="zip" name="zip" autoComplete="postal-code" value={zip} onChange={(event) => setZip(event.target.value)} required pattern=".*\S.*" /></div>
+          <div className={`${styles.field} ${styles.wide}`}><label htmlFor="address">Adresse et point de repère *</label><input id="address" name="address" autoComplete="street-address" maxLength={60} value={address} onChange={(event) => setAddress(event.target.value)} required pattern=".*\S.*" aria-describedby="address-help" /><p className={styles.help} id="address-help">60 caractères maximum.</p></div>
+          <div className={`${styles.field} ${styles.wide}`}><label htmlFor="message">Notes de commande <span>(facultatif)</span></label><textarea id="message" name="message" rows={3} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Une précision pour la livraison ?" /></div>
         </div>
-      </div>
+      </fieldset>
+      <fieldset className={styles.section} disabled={isLoading}>
+        <legend><span className={styles.number}>03</span>Votre paiement</legend>
+        <div className={styles.payment}><Check size={18} aria-hidden="true" /><div><strong>Paiement à la livraison</strong><p>Réglez en espèces à la réception de votre commande.</p></div><Truck size={22} strokeWidth={1.4} aria-hidden="true" /></div>
+        <p className={styles.unavailable}>Seul le paiement à la livraison est disponible actuellement.</p>
+        <ul className={styles.methods} aria-label="Autres moyens de paiement indisponibles"><li><Image src="/wave.png" alt="" width={22} height={22} />Wave<span>Indisponible</span></li><li><Image src="/orange-money.png" alt="" width={22} height={22} />Orange Money<span>Indisponible</span></li></ul>
+      </fieldset>
     </div>
-  );
-};
-
-export default CheckoutPage;
+    <aside className={styles.summary} aria-labelledby="summary-title">
+      <p className={styles.eyebrow}>Votre sélection</p><div className={styles.summaryHeading}><h2 id="summary-title">Vos soins, bientôt chez vous.</h2><Link href="/panier">Modifier le panier</Link></div>
+      <ul className={styles.products}>{carts.map((cart) => <li key={cart.id}>
+        <div className={styles.photo}>{cart.imageUrl ? <Image src={cart.imageUrl} alt="" fill sizes="56px" /> : <ShoppingBag size={20} aria-hidden="true" />}</div>
+        <div className={styles.productDetails}><Link href={productHref({ ...cart, _id: cart.id })}>{formatProductName(cart.title)}</Link><span>Quantité : {cart.quantity}</span></div>
+        <strong>{money(discountedPrice(cart.price, cart.discount) * cart.quantity)}</strong>
+      </li>)}</ul>
+      <dl className={styles.breakdown}>
+        <div><dt>Sous-total ({totals.quantity} article{totals.quantity > 1 ? "s" : ""})</dt><dd>{money(totals.subtotal)}</dd></div>
+        {totals.savings > 0 && <div className={styles.savings}><dt>Dont remises produits</dt><dd>{money(totals.savings)}</dd></div>}
+        <div><dt>Livraison</dt><dd>{money(shippingCost)}</dd></div>
+        <div className={styles.total}><dt>Total<span>Livraison comprise</span></dt><dd aria-live="polite">{money(totalXof)}</dd></div>
+      </dl>
+      {error && <div className={styles.error} role="alert" tabIndex={-1} ref={errorRef}><p>{error}</p><Link href="/panier">Vérifier mon panier</Link></div>}
+      <button type="submit" className={styles.primary} disabled={isLoading || !user}>{isLoading ? <><LoaderCircle className={styles.spinner} size={18} aria-hidden="true" />Confirmation en cours…</> : <>Confirmer la commande<ArrowRight size={17} aria-hidden="true" /></>}</button>
+      <p className={styles.note}>{user ? "Vous réglerez votre commande en espèces à la réception." : <>Connectez-vous pour confirmer votre commande.<br /><Link href="/connexion">Se connecter</Link></>}</p>
+    </aside>
+  </form>;
+}

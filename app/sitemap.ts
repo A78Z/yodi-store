@@ -1,7 +1,11 @@
 import { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/site'
+import { getVisibleUnivers } from '@/lib/catalog'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+// Calculé à la demande : reflète toujours les catégories visibles en base.
+export const dynamic = 'force-dynamic'
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = SITE_URL
   const currentDate = new Date().toISOString().split('T')[0]
 
@@ -63,22 +67,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
-  // Catégories de produits (chemins réels imbriqués category/subcategory)
-  const categories = [
-    'tisane/detox',
-    'savon',
-    'tisane/digestive',
-    'baume/baume-barbe',
-    'huile/cheveux',
-    'huile/huile-barbe'
+  // Catégories et sous-catégories visibles uniquement (≥ 1 produit actif)
+  const univers = await getVisibleUnivers().catch((error) => {
+    console.error('Error fetching visible categories for sitemap:', error)
+    return []
+  })
+  const categories = univers.flatMap((u) => [
+    u.slug,
+    ...u.subcategories.map((s) => `${u.slug}/${s.slug}`),
+  ])
+  const categoryPages = [
+    { url: `${baseUrl}/categories`, lastModified: currentDate, changeFrequency: 'weekly' as const, priority: 0.9 },
+    ...categories.map((category) => ({
+      url: `${baseUrl}/${category}`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly' as const,
+      priority: 0.9,
+    })),
   ]
-
-  const categoryPages = categories.map((category) => ({
-    url: `${baseUrl}/${category}`,
-    lastModified: currentDate,
-    changeFrequency: 'weekly' as const,
-    priority: 0.9,
-  }))
 
   return [...staticPages, ...categoryPages]
 }

@@ -1,204 +1,140 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import Image from "next/image";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Search } from "lucide-react";
-import { IProduct } from "@/lib/models/product";
-import useStore from "@/lib/store-manage";
-import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
-import NotifyButton from "@/components/NotifyButton";
-import { trackAddToCart, sendToCAPI } from "@/components/MetaPixel";
+import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronRight, RefreshCw, Search, SearchX } from "lucide-react";
+import type { IProduct } from "@/lib/models/product";
+import { categoryLabel } from "@/lib/category-label";
 import { PHONE_COMMERCIAL } from "@/lib/site";
+import HomeProductTile from "@/components/home/HomeProductTile";
+import styles from "./page.module.css";
 
-const SearchResults = () => {
-  const q = (useSearchParams().get("q") || "").trim();
-  const [products, setProducts] = useState<IProduct[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { addToCart, selectedCurrency, usdRate } = useStore();
+type SearchState = {
+  status: "idle" | "loading" | "success" | "error";
+  products: IProduct[];
+  total: number;
+  pages: number;
+};
+
+function searchHref(query: string, page = 1) {
+  const params = new URLSearchParams({ q: query });
+  if (page > 1) params.set("page", String(page));
+  return `/recherche?${params}`;
+}
+
+function QueryForm({ query }: { query: string }) {
+  const router = useRouter();
+  const [value, setValue] = useState(query);
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const nextQuery = value.trim();
+    router.push(nextQuery ? searchHref(nextQuery) : "/recherche");
+  };
+  return (
+    <form role="search" aria-label="Recherche dans le catalogue" onSubmit={submit} className={styles.form}>
+      <label htmlFor="results-query">Votre recherche</label>
+      <div className={styles.field}>
+        <Search aria-hidden="true" size={19} />
+        <input id="results-query" name="q" type="search" value={value} onChange={event => setValue(event.target.value)} placeholder="Un nom de soin, une envie…" />
+        <button type="submit">Rechercher<ArrowRight size={16} aria-hidden="true" /></button>
+      </div>
+    </form>
+  );
+}
+
+function SearchContent({ query, page }: { query: string; page: number }) {
+  const [attempt, setAttempt] = useState(0);
+  const [state, setState] = useState<SearchState>({ status: query ? "loading" : "idle", products: [], total: 0, pages: 0 });
 
   useEffect(() => {
-    if (!q) {
-      setProducts([]);
-      return;
-    }
-    let cancelled = false;
+    if (!query) return;
+    const controller = new AbortController();
     (async () => {
       try {
-        setLoading(true);
-        const res = await fetch(`/api/products?q=${encodeURIComponent(q)}&limit=24`);
-        const data = await res.json();
-        if (!cancelled) setProducts(data.products || []);
+        const params = new URLSearchParams({ q: query, limit: "24", page: String(page) });
+        const response = await fetch(`/api/products?${params}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("Search request failed");
+        const data = await response.json();
+        if (!Array.isArray(data.products) || !data.pagination) throw new Error("Invalid search response");
+        if (!controller.signal.aborted) setState({ status: "success", products: data.products, total: data.pagination.totalProducts, pages: data.pagination.totalPages });
       } catch {
-        if (!cancelled) setProducts([]);
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (!controller.signal.aborted) setState({ status: "error", products: [], total: 0, pages: 0 });
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [q]);
+    return () => controller.abort();
+  }, [query, page, attempt]);
 
-  const handleAddToCart = (product: IProduct) => {
-    addToCart({ ...product, quantity: 1, id: product._id as string });
-    const finalPrice =
-      product.discount && product.discount > 0
-        ? product.price - (product.price * product.discount) / 100
-        : product.price;
-    const eventId = trackAddToCart({
-      id: product._id as string,
-      name: product.title,
-      price: finalPrice,
-      quantity: 1,
-      currency: selectedCurrency,
-    });
-    sendToCAPI(
-      "AddToCart",
-      {
-        content_ids: [product._id as string],
-        content_name: product.title,
-        content_type: "product",
-        value: finalPrice,
-        currency: selectedCurrency,
-        num_items: 1,
-      },
-      eventId
-    );
-    toast.success("Produit ajouté au panier", {
-      duration: 3000,
-      style: { color: "#10b981" },
-      position: "top-right",
-    });
+  const loading = state.status === "loading";
+  const empty = state.status === "success" && state.total === 0;
+  const outsidePage = state.status === "success" && state.total > 0 && state.products.length === 0;
+  const retry = () => {
+    setState({ status: "loading", products: [], total: 0, pages: 0 });
+    setAttempt(value => value + 1);
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-8 font-josefin min-h-[50vh]">
-      <h1 className="text-xl md:text-2xl font-bold text-black mb-2">
-        {q ? (
-          <>
-            Résultats pour <span className="text-[#A36F5E]">«&nbsp;{q}&nbsp;»</span>
-          </>
-        ) : (
-          "Rechercher un produit"
-        )}
-      </h1>
+    <main className={styles.page}>
+      <div className={styles.container}>
+        <nav aria-label="Fil d’Ariane" className={styles.breadcrumb}><ol><li><Link href="/">Accueil</Link></li><li><ChevronRight size={12} aria-hidden="true" /><span aria-current="page">Recherche</span></li></ol></nav>
+        <header className={styles.heading}>
+          <p className={styles.eyebrow}><span aria-hidden="true" />Maison Yodi-K · La boutique</p>
+          <h1>{query ? <>Résultats pour <em>« {query} »</em></> : <>Un soin <em>en tête ?</em></>}</h1>
+          <p className={styles.intro}>{query ? "Retrouvez nos soins et prenez le temps de choisir votre prochain rituel." : "Un nom, un mot, une envie. Trouvez le soin que vous cherchez."}</p>
+          <QueryForm query={query} />
+        </header>
 
-      {q && !loading && (
-        <p className="text-sm text-gray-500 mb-6">
-          {products.length} produit{products.length > 1 ? "s" : ""} trouvé
-          {products.length > 1 ? "s" : ""}
-        </p>
-      )}
-
-      {/* Chargement */}
-      {loading && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex flex-col gap-3">
-              <Skeleton className="w-full h-64" />
-              <Skeleton className="w-3/4 h-4" />
-              <Skeleton className="w-1/2 h-4" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Aucun résultat */}
-      {!loading && q && products.length === 0 && (
-        <div className="flex flex-col items-center justify-center text-center py-16 gap-3">
-          <Search className="w-12 h-12 text-gray-300" />
-          <p className="text-gray-700">
-            Aucun produit ne correspond à «&nbsp;{q}&nbsp;».
+        <section aria-labelledby="search-results-title" aria-busy={loading} className={styles.results}>
+          <div className={styles.toolbar}>
+            <h2 id="search-results-title">{query ? "Les résultats" : "À vous de chercher"}</h2>
+            <Link href="/categories" className={styles.allLink}>Tous nos univers<ArrowUpRight size={16} aria-hidden="true" /></Link>
+          </div>
+          <p className={styles.status} role="status" aria-live="polite">
+            {loading ? "Recherche en cours…" : state.status === "error" ? "La recherche n’a pas pu être chargée." : state.status === "success" ? <><strong>{state.total}</strong> produit{state.total !== 1 ? "s" : ""} trouvé{state.total !== 1 ? "s" : ""}{state.pages > 1 && ` · Page ${page} sur ${state.pages}`}</> : "Explorez le catalogue à partir d’un mot-clé."}
           </p>
-          <p className="text-sm text-gray-500">
-            Essaie avec un autre mot-clé ou contacte-nous au{" "}
-            <a href={`tel:${PHONE_COMMERCIAL.tel}`} className="text-[#A36F5E] font-medium hover:underline">
-              {PHONE_COMMERCIAL.label}
-            </a>
-            .
-          </p>
-        </div>
-      )}
 
-      {/* Résultats */}
-      {!loading && products.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
-          {products.map((product) => {
-            const indisponible = product.disponible === false;
-            const productUrl = product.subCategory
-              ? `/${product.category}/${product.subCategory}`
-              : `/${product.category}/product/${product._id}`;
-            return (
-              <div key={String(product._id)} className="flex flex-col h-full group">
-                <Link href={productUrl} className="flex-1 flex flex-col items-center gap-3">
-                  <div className="relative overflow-hidden rounded-lg">
-                    <Image
-                      src={product.imageUrl}
-                      quality={90}
-                      alt={product.title}
-                      width={220}
-                      height={220}
-                      className={`w-72 h-64 object-cover object-center transition-transform duration-300 group-hover:scale-105 ${
-                        indisponible ? "grayscale opacity-90" : ""
-                      }`}
-                    />
-                    {indisponible && (
-                      <span className="absolute top-2 left-2 bg-[#FF9800] text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">
-                        BIENTÔT DISPONIBLE
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-black text-sm text-center group-hover:text-[#A36F5E] transition-colors">
-                    {product.title}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {(product.discount ?? 0) > 0 && (
-                      <span className="text-gray-400 line-through text-sm">
-                        {selectedCurrency === "XOF" ? product.price : Number(product.price / Number(usdRate || 1)).toFixed(2)} {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                      </span>
-                    )}
-                    <span className="text-[#A36F5E] text-xl font-bold">
-                      {selectedCurrency === "XOF"
-                        ? Math.round(product.price - (product.price * (product.discount ?? 0)) / 100)
-                        : Number((product.price - (product.price * (product.discount ?? 0)) / 100) / Number(usdRate || 1)).toFixed(2)}{" "}
-                      {selectedCurrency === "XOF" ? "FCFA" : "USD"}
-                    </span>
-                  </div>
-                </Link>
-                <div className="mt-auto pt-4">
-                  {indisponible ? (
-                    <NotifyButton
-                      productId={String(product._id)}
-                      productName={product.title}
-                      productImage={product.imageUrl}
-                      variant="card"
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleAddToCart(product)}
-                      className="bg-[#A36F5E] cursor-pointer text-white px-4 py-2 rounded-md text-sm font-medium w-full transition-all duration-300 hover:bg-[#916253]"
-                    >
-                      Ajouter au panier
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+          {loading && <ul className={styles.grid} aria-hidden="true">{Array.from({ length: 6 }, (_, index) => <li key={index} className={styles.skeleton}><div /><span /><span /><span /></li>)}</ul>}
+
+          {state.status === "success" && state.products.length > 0 && <ul className={styles.grid} aria-label="Produits trouvés">
+            {state.products.map(product => <li key={String(product._id)}><HomeProductTile product={product} categoryTitle={categoryLabel(product.category)} /></li>)}
+          </ul>}
+
+          {(state.status === "idle" || empty) && <div className={styles.empty}>
+            <span className={styles.stateIcon}>{empty ? <SearchX size={28} strokeWidth={1.3} aria-hidden="true" /> : <Search size={28} strokeWidth={1.3} aria-hidden="true" />}</span>
+            <h3>{empty ? "Un autre mot, une nouvelle piste." : "Votre prochain rituel commence ici."}</h3>
+            <p>{empty ? "Aucun produit ne correspond à cette recherche. Essayez un nom plus court ou un autre mot-clé." : "Essayez un type de soin ou le nom d’un produit pour découvrir les résultats."}</p>
+            <div className={styles.suggestions} aria-label="Exemples de recherche">{["Huile", "Baume", "Barbe"].map(word => <Link key={word} href={searchHref(word.toLowerCase())}>{word}<ArrowUpRight size={14} aria-hidden="true" /></Link>)}</div>
+            {empty && <p className={styles.help}>Besoin d’un conseil ? <a href={`tel:${PHONE_COMMERCIAL.tel}`}>{PHONE_COMMERCIAL.label}</a></p>}
+          </div>}
+
+          {state.status === "error" && <div className={styles.empty}>
+            <span className={styles.stateIcon}><RefreshCw size={28} strokeWidth={1.3} aria-hidden="true" /></span>
+            <h3>Réessayons dans un instant.</h3>
+            <p>Nous n’avons pas pu récupérer les produits. Vous pouvez relancer la recherche.</p>
+            <button type="button" className={styles.primary} onClick={retry}><RefreshCw size={16} aria-hidden="true" />Réessayer</button>
+          </div>}
+
+          {outsidePage && <div className={styles.empty}><h3>Cette page n’affiche aucun produit.</h3><p>Retrouvez les résultats au début de votre recherche.</p><Link className={styles.primary} href={searchHref(query)}>Revenir aux résultats<ArrowRight size={16} aria-hidden="true" /></Link></div>}
+
+          {state.status === "success" && state.products.length > 0 && state.pages > 1 && <nav aria-label="Pagination des résultats" className={styles.pagination}>
+            {page > 1 && <Link href={searchHref(query, page - 1)}><ArrowLeft size={16} aria-hidden="true" />Précédent</Link>}
+            <span>Page {page} sur {state.pages}</span>
+            {page < state.pages && <Link href={searchHref(query, page + 1)}>Suivant<ArrowRight size={16} aria-hidden="true" /></Link>}
+          </nav>}
+        </section>
+        <Link href="/categories" className={styles.back}><ArrowLeft size={16} aria-hidden="true" />Explorer tous les univers</Link>
+      </div>
+    </main>
   );
-};
+}
 
-const RecherchePage = () => (
-  <Suspense fallback={<div className="min-h-[50vh]" />}>
-    <SearchResults />
-  </Suspense>
-);
+function SearchResults() {
+  const params = useSearchParams();
+  const query = (params.get("q") || "").trim();
+  const page = Math.max(1, Math.min(10000, Number.parseInt(params.get("page") || "1", 10) || 1));
+  return <SearchContent key={`${query}/${page}`} query={query} page={page} />;
+}
 
-export default RecherchePage;
+export default function RecherchePage() {
+  return <Suspense fallback={<main className={styles.page}><p className={styles.container} role="status">Préparation de votre recherche…</p></main>}><SearchResults /></Suspense>;
+}

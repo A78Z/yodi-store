@@ -81,11 +81,11 @@ const Header = () => {
         onFocus={() => (paused.current = true)}
         onBlur={() => (paused.current = false)}
       >
-        <div className="max-w-7xl mx-auto min-h-9 md:min-h-14 py-1.5 px-3 md:px-6 flex items-center justify-center md:justify-between gap-4">
+        <div className="max-w-7xl mx-auto min-h-9 md:min-h-14 py-1.5 px-3 md:px-6 flex flex-wrap xl:flex-nowrap items-center justify-center md:justify-between gap-4">
           {/* Message courant (centré sur mobile) */}
           <p
             aria-live="polite"
-            className="flex items-center gap-2 text-[13px] md:text-sm font-medium tracking-[0.01em] text-center animate-in fade-in duration-500 md:shrink-0"
+            className="flex items-center gap-2 text-[13px] md:text-sm font-medium tracking-[0.01em] text-center animate-in fade-in duration-500 md:w-full md:justify-center xl:w-auto xl:shrink-0"
             key={msgIndex}
           >
             <ActiveIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -93,7 +93,7 @@ const Header = () => {
           </p>
 
           {/* Barre de recherche — déplacée ici sur desktop (cachée sur mobile : reste sous le logo) */}
-          <div className="hidden md:flex flex-1 justify-center">
+          <div className="hidden md:flex min-w-0 flex-1 justify-center">
             <div className="w-full max-w-[600px]">
               <SearchBar id="search-topbar" />
             </div>
