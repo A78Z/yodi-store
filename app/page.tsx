@@ -24,7 +24,7 @@ export default async function Home() {
     getManagedGallery(),
   ]);
 
-  const galleryMedia = process.env.VERCEL_ENV === "preview" && process.env.VERCEL_GIT_COMMIT_REF === "refonte"
+  const galleryMedia = process.env.VERCEL_ENV === "production" || (process.env.VERCEL_ENV === "preview" && process.env.VERCEL_GIT_COMMIT_REF === "refonte")
     ? completeHomeGallery(managedGallery) : [];
 
   return (
